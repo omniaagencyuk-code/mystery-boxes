@@ -34,6 +34,7 @@ export async function getSitemapEntriesForMarket(
     { path: marketPath(market, '/compare') },
     { path: marketPath(market, '/promo-codes') },
     { path: marketPath(market, '/categories') },
+    { path: marketPath(market, '/guides') },
     { path: marketPath(market, '/news') },
   ];
 

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { Markdown } from '@/components/markdown';
 import { OperatorCard } from '@/components/operator-card';
 import { getCategoryForMarket, getPageForMarket } from '@/lib/data/content';
 import { getVisibleOperatorsForCategory } from '@/lib/data/operators';
@@ -26,6 +27,7 @@ const RESERVED = new Set([
   'compare',
   'promo-codes',
   'categories',
+  'guides',
   'uk',
   'us',
 ]);
@@ -122,13 +124,7 @@ export default async function MarketSlugPage({
       <header>
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">{page.title}</h1>
       </header>
-      {page.body && (
-        <div className="space-y-3 leading-relaxed text-ink/90">
-          {page.body.split(/\n{2,}/).map((para, i) => (
-            <p key={i}>{para}</p>
-          ))}
-        </div>
-      )}
+      {page.body && <Markdown>{page.body}</Markdown>}
     </article>
   );
 }

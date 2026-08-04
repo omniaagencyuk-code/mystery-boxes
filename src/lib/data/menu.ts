@@ -37,6 +37,7 @@ function defaultMenu(market: MarketCode, location: MenuLocation): MenuNode[] {
           leaf('Compare', marketPath(market, '/compare')),
           leaf('Promo codes', marketPath(market, '/promo-codes')),
           leaf('Categories', marketPath(market, '/categories')),
+          leaf('Guides', marketPath(market, '/guides')),
           leaf('News', marketPath(market, '/news')),
         ],
       },
@@ -58,6 +59,7 @@ function defaultMenu(market: MarketCode, location: MenuLocation): MenuNode[] {
     leaf('Compare', marketPath(market, '/compare')),
     leaf('Promo codes', marketPath(market, '/promo-codes')),
     leaf('Categories', marketPath(market, '/categories')),
+    leaf('Guides', marketPath(market, '/guides')),
     leaf('News', marketPath(market, '/news')),
   ];
 }

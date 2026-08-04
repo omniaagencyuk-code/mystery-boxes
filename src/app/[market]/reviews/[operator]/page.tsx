@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { Markdown } from '@/components/markdown';
 import { OperatorCompliance } from '@/components/compliance';
 import { JsonLd } from '@/components/json-ld';
 import { OutboundLink } from '@/components/outbound-link';
@@ -155,11 +156,7 @@ export default async function OperatorReviewPage({
       {review?.body && (
         <section className="space-y-3">
           <h2 className="text-xl font-bold text-ink">Our review</h2>
-          <div className="space-y-3 leading-relaxed text-ink/90">
-            {review.body.split(/\n{2,}/).map((para, i) => (
-              <p key={i}>{para}</p>
-            ))}
-          </div>
+          <Markdown>{review.body}</Markdown>
           {review.verdict && (
             <p className="border-l-4 border-primary pl-3 font-semibold text-ink">{review.verdict}</p>
           )}
