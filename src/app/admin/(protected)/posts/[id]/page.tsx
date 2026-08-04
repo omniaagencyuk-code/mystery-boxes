@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { savePost } from '../actions';
+import { MarkdownEditor } from '@/components/admin/markdown-editor';
 import { Field, inputCls, MarketSelect, PageHeader, StatusSelect, SubmitRow } from '@/components/admin/ui';
 import { adminPageClient } from '@/lib/admin/db';
 
@@ -16,8 +17,11 @@ export default async function PostFormPage({
   const isNew = id === 'new';
   const [{ data: markets }, { data: media }] = await Promise.all([
     db.from('markets').select('id, code, name').order('code'),
-    db.from('media').select('id, title, path').order('created_at', { ascending: false }),
+    db.from('media').select('id, title, path, url, mime_type').order('created_at', { ascending: false }),
   ]);
+  const imageMedia = (media ?? [])
+    .filter((m) => m.mime_type?.startsWith('image/') && m.url)
+    .map((m) => ({ url: m.url as string, title: m.title || m.path }));
 
   let post = null;
   if (!isNew) {
@@ -69,8 +73,10 @@ export default async function PostFormPage({
           <textarea id="meta_description" name="meta_description" rows={2} defaultValue={post?.meta_description ?? ''} className={inputCls} />
         </Field>
 
-        <Field label="Body" htmlFor="body" hint="Markdown. Separate paragraphs with a blank line.">
-          <textarea id="body" name="body" rows={12} defaultValue={post?.body ?? ''} className={`${inputCls} font-mono`} />
+        <Field label="Body" hint="Use the toolbar for headings, links, tables and images. Preview shows the published look.">
+          <div className="mt-1">
+            <MarkdownEditor name="body" defaultValue={post?.body ?? ''} rows={16} media={imageMedia} />
+          </div>
         </Field>
 
         <Field label="Status">
