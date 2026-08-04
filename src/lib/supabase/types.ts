@@ -202,6 +202,124 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['pages']['Insert']>;
         Relationships: [];
       };
+      admins: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          email: string;
+          name: string | null;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          email: string;
+          name?: string | null;
+          active?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['admins']['Insert']>;
+        Relationships: [];
+      };
+      media: {
+        Row: {
+          id: string;
+          bucket: string;
+          path: string;
+          url: string | null;
+          alt: string | null;
+          title: string | null;
+          mime_type: string | null;
+          size_bytes: number | null;
+          width: number | null;
+          height: number | null;
+          uploaded_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          bucket?: string;
+          path: string;
+          url?: string | null;
+          alt?: string | null;
+          title?: string | null;
+          mime_type?: string | null;
+          size_bytes?: number | null;
+          width?: number | null;
+          height?: number | null;
+          uploaded_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['media']['Insert']>;
+        Relationships: [];
+      };
+      posts: {
+        Row: {
+          id: string;
+          slug: string;
+          market_id: string;
+          title: string;
+          excerpt: string | null;
+          body: string | null;
+          meta_description: string | null;
+          cover_media_id: string | null;
+          author: string | null;
+          status: PublishStatus;
+          published_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          market_id: string;
+          title: string;
+          excerpt?: string | null;
+          body?: string | null;
+          meta_description?: string | null;
+          cover_media_id?: string | null;
+          author?: string | null;
+          status?: PublishStatus;
+          published_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['posts']['Insert']>;
+        Relationships: [];
+      };
+      affiliate_links: {
+        Row: {
+          id: string;
+          slug: string;
+          label: string;
+          operator_id: string | null;
+          market_id: string | null;
+          target_url: string;
+          rel: string;
+          active: boolean;
+          clicks: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          label: string;
+          operator_id?: string | null;
+          market_id?: string | null;
+          target_url: string;
+          rel?: string;
+          active?: boolean;
+          clicks?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['affiliate_links']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -219,3 +337,7 @@ export type OfferRow = Database['public']['Tables']['offers']['Row'];
 export type CategoryRow = Database['public']['Tables']['categories']['Row'];
 export type ReviewRow = Database['public']['Tables']['reviews']['Row'];
 export type PageRow = Database['public']['Tables']['pages']['Row'];
+export type AdminRow = Database['public']['Tables']['admins']['Row'];
+export type MediaRow = Database['public']['Tables']['media']['Row'];
+export type PostRow = Database['public']['Tables']['posts']['Row'];
+export type AffiliateLinkRow = Database['public']['Tables']['affiliate_links']['Row'];
