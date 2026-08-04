@@ -14,7 +14,7 @@ export default async function MediaListPage() {
     <div className="space-y-6">
       <PageHeader title="Media" />
 
-      <form action={uploadMedia} className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+      <form action={uploadMedia} className="space-y-3 u-glass rounded-lg p-4">
         <h2 className="text-sm font-semibold">Upload</h2>
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="File" htmlFor="file">
@@ -37,12 +37,12 @@ export default async function MediaListPage() {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {media.map((m) => (
-            <div key={m.id} className="rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+            <div key={m.id} className="u-glass rounded-lg p-2">
               {m.url && m.mime_type?.startsWith('image/') ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={m.url} alt={m.alt ?? ''} className="mb-2 h-32 w-full rounded object-cover" />
               ) : (
-                <div className="mb-2 flex h-32 items-center justify-center rounded bg-gray-100 text-xs text-gray-500 dark:bg-gray-800">
+                <div className="mb-2 flex h-32 items-center justify-center rounded bg-elevated text-xs text-muted">
                   {m.mime_type ?? 'file'}
                 </div>
               )}
@@ -50,7 +50,7 @@ export default async function MediaListPage() {
                 {m.title ?? m.path}
               </div>
               <div className="mt-1 flex items-center justify-between text-xs">
-                <Link href={`/admin/media/${m.id}`} className="text-emerald-700 hover:underline dark:text-emerald-400">
+                <Link href={`/admin/media/${m.id}`} className="text-primary hover:underline">
                   Edit
                 </Link>
                 <DeleteButton action={deleteMedia} id={m.id} />

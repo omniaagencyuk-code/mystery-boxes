@@ -107,15 +107,15 @@ export default async function OperatorFormPage({
           </Field>
         </div>
 
-        <fieldset className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+        <fieldset className="u-glass rounded-lg p-4">
           <legend className="px-1 text-sm font-medium">Markets</legend>
-          <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mb-2 text-xs text-muted">
             Include the operator in a market, control whether it appears in listings (visible), and
             whether it is hard geo-blocked for that market (served a 404).
           </p>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-gray-500">
+              <tr className="text-left text-muted">
                 <th className="py-1">Market</th>
                 <th className="py-1">Include</th>
                 <th className="py-1">Visible</th>

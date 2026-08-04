@@ -27,9 +27,7 @@ export function AdminNav() {
             key={link.href}
             href={link.href}
             className={`rounded-md px-3 py-2 ${
-              active
-                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+              active ? 'bg-primary font-semibold text-onprimary' : 'text-muted hover:bg-elevated hover:text-ink'
             }`}
           >
             {link.label}

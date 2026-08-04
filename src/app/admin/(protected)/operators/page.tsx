@@ -22,7 +22,7 @@ export default async function OperatorsListPage() {
       ) : (
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700">
+            <tr className="border-b border-line text-left text-muted">
               <th className="py-2">Name</th>
               <th className="py-2">Type</th>
               <th className="py-2">Rating</th>
@@ -32,14 +32,14 @@ export default async function OperatorsListPage() {
           </thead>
           <tbody>
             {operators.map((o) => (
-              <tr key={o.id} className="border-b border-gray-100 dark:border-gray-800">
+              <tr key={o.id} className="border-b border-line">
                 <td className="py-2">{o.name}</td>
-                <td className="py-2 text-gray-500">{typeName.get(o.operator_type_id)}</td>
+                <td className="py-2 text-muted">{typeName.get(o.operator_type_id)}</td>
                 <td className="py-2">{o.rating ?? '—'}</td>
                 <td className="py-2">{o.active ? 'Yes' : 'No'}</td>
                 <td className="py-2 text-right">
                   <span className="inline-flex gap-3">
-                    <Link href={`/admin/operators/${o.id}`} className="text-emerald-700 hover:underline dark:text-emerald-400">
+                    <Link href={`/admin/operators/${o.id}`} className="text-primary hover:underline">
                       Edit
                     </Link>
                     <DeleteButton action={deleteOperator} id={o.id} />

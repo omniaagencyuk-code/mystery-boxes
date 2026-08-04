@@ -29,7 +29,7 @@ export default async function ReviewFormPage({
   return (
     <div className="max-w-2xl">
       <PageHeader title={isNew ? 'New review' : 'Edit review'} />
-      <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+      <p className="mb-4 text-sm text-muted">
         One review per operator per market. UK and US reviews of the same operator can differ.
       </p>
       <form action={saveReview} className="space-y-4">

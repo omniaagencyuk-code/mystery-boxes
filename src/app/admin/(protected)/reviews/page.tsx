@@ -24,7 +24,7 @@ export default async function ReviewsListPage() {
       ) : (
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700">
+            <tr className="border-b border-line text-left text-muted">
               <th className="py-2">Operator</th>
               <th className="py-2">Market</th>
               <th className="py-2">Verdict</th>
@@ -34,16 +34,16 @@ export default async function ReviewsListPage() {
           </thead>
           <tbody>
             {reviews.map((r) => (
-              <tr key={r.id} className="border-b border-gray-100 dark:border-gray-800">
+              <tr key={r.id} className="border-b border-line">
                 <td className="py-2">{operatorName.get(r.operator_id) ?? '—'}</td>
                 <td className="py-2">{marketCode.get(r.market_id)}</td>
-                <td className="py-2 text-gray-500">{r.verdict ?? ''}</td>
+                <td className="py-2 text-muted">{r.verdict ?? ''}</td>
                 <td className="py-2">
                   <StatusBadge status={r.status} />
                 </td>
                 <td className="py-2 text-right">
                   <span className="inline-flex gap-3">
-                    <Link href={`/admin/reviews/${r.id}`} className="text-emerald-700 hover:underline dark:text-emerald-400">
+                    <Link href={`/admin/reviews/${r.id}`} className="text-primary hover:underline">
                       Edit
                     </Link>
                     <DeleteButton action={deleteReview} id={r.id} />

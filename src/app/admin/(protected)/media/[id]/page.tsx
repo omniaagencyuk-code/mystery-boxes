@@ -22,10 +22,10 @@ export default async function MediaEditPage({
 
       {item.url && item.mime_type?.startsWith('image/') && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.url} alt={item.alt ?? ''} className="max-h-64 rounded border border-gray-200 dark:border-gray-700" />
+        <img src={item.url} alt={item.alt ?? ''} className="max-h-64 rounded border border-line" />
       )}
 
-      <p className="break-all text-xs text-gray-500 dark:text-gray-400">{item.url}</p>
+      <p className="break-all text-xs text-muted">{item.url}</p>
 
       <form action={updateMedia} className="space-y-4">
         <input type="hidden" name="id" value={id} />

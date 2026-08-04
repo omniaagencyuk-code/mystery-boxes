@@ -2,8 +2,8 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 export const inputCls =
-  'mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900';
-export const labelCls = 'block text-sm font-medium';
+  'mt-1 w-full rounded-md border border-line bg-elevated px-3 py-2 text-sm text-ink';
+export const labelCls = 'block text-sm font-medium text-ink';
 
 export function Field({
   label,
@@ -40,7 +40,7 @@ export function PageHeader({
       {action && (
         <Link
           href={action.href}
-          className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white dark:bg-white dark:text-gray-900"
+          className="u-btn-primary rounded-lg px-4 py-2 text-sm font-bold"
         >
           {action.label}
         </Link>
@@ -58,13 +58,10 @@ export function SubmitRow({
 }) {
   return (
     <div className="flex items-center gap-3 pt-2">
-      <button
-        type="submit"
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
-      >
+      <button type="submit" className="u-btn-primary rounded-lg px-5 py-2 text-sm font-bold">
         {label}
       </button>
-      <Link href={cancelHref} className="text-sm text-gray-500 hover:underline dark:text-gray-400">
+      <Link href={cancelHref} className="text-sm text-muted hover:text-ink">
         Cancel
       </Link>
     </div>
@@ -76,9 +73,7 @@ export function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={`inline-flex rounded px-2 py-0.5 text-xs ${
-        published
-          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
-          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+        published ? 'bg-success/15 text-success' : 'bg-elevated text-muted'
       }`}
     >
       {status}
@@ -88,7 +83,7 @@ export function StatusBadge({ status }: { status: string }) {
 
 export function EmptyState({ children }: { children: ReactNode }) {
   return (
-    <p className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+    <p className="rounded-lg border border-dashed border-line p-6 text-center text-sm text-muted">
       {children}
     </p>
   );
@@ -140,10 +135,7 @@ export function DeleteButton({
   return (
     <form action={action} className="inline">
       <input type="hidden" name="id" value={id} />
-      <button
-        type="submit"
-        className="text-sm text-rose-600 hover:underline"
-      >
+      <button type="submit" className="text-sm text-danger hover:underline">
         {label}
       </button>
     </form>

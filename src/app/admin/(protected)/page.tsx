@@ -33,10 +33,8 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Manage everything on the site from here.
-        </p>
+        <h1 className="text-2xl font-bold text-ink">Dashboard</h1>
+        <p className="text-sm text-muted">Manage everything on the site from here.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -44,10 +42,10 @@ export default async function AdminDashboard() {
           <Link
             key={card.href}
             href={card.href}
-            className="rounded-xl border border-gray-200 p-4 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+            className="u-glass rounded-xl p-4 transition-colors hover:text-primary"
           >
-            <div className="text-2xl font-semibold">{counts[i]}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">{card.label}</div>
+            <div className="text-2xl font-bold text-ink">{counts[i]}</div>
+            <div className="text-sm text-muted">{card.label}</div>
           </Link>
         ))}
       </div>

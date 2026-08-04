@@ -34,12 +34,12 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
   if (!admin) {
     return (
       <main className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
-        <h1 className="text-xl font-semibold">Not authorised</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="text-xl font-bold text-ink">Not authorised</h1>
+        <p className="text-sm text-muted">
           The account {user.email} is not an admin on this site.
         </p>
         <form action={signOut}>
-          <button className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-gray-900">
+          <button className="u-btn-primary rounded-lg px-4 py-2 text-sm font-bold">
             Sign out
           </button>
         </form>
@@ -50,12 +50,12 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
   return (
     <div className="mx-auto flex min-h-full max-w-6xl gap-6 px-4 py-6">
       <aside className="w-56 shrink-0 space-y-4">
-        <Link href="/admin" className="block font-semibold">
+        <Link href="/admin" className="block font-black tracking-tight text-ink">
           Mystery Boxes admin
         </Link>
         <AdminNav />
         <form action={signOut}>
-          <button className="w-full rounded-md border border-gray-300 px-3 py-2 text-left text-sm hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800">
+          <button className="w-full rounded-md border border-line px-3 py-2 text-left text-sm text-muted hover:bg-elevated hover:text-ink">
             Sign out {admin.name ? `(${admin.name})` : ''}
           </button>
         </form>
