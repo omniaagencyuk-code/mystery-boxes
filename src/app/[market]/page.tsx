@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { OperatorCard } from '@/components/operator-card';
 import { getCategoriesForMarket, getMarketPromoOffers } from '@/lib/data/content';
 import { getVisibleOperatorsForMarket } from '@/lib/data/operators';
-import { isSupportedMarket, MARKET_LABELS, SUPPORTED_MARKETS, type MarketCode } from '@/lib/geo';
+import { marketPath, isSupportedMarket, MARKET_LABELS, SUPPORTED_MARKETS, type MarketCode } from '@/lib/geo';
 import { getRequestGeoContext } from '@/lib/request-context';
 import { marketAlternates } from '@/lib/seo';
 
@@ -102,13 +102,13 @@ export default async function MarketHomePage({
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
-              href={`/${marketCode}/compare`}
+              href={marketPath(marketCode, '/compare')}
               className="u-btn-primary rounded-lg px-5 py-3 text-sm font-bold"
             >
               Compare platforms
             </Link>
             <Link
-              href={`/${marketCode}/reviews`}
+              href={marketPath(marketCode, '/reviews')}
               className="rounded-lg border border-line px-5 py-3 text-sm font-bold text-ink hover:bg-elevated"
             >
               Browse reviews
@@ -152,7 +152,7 @@ export default async function MarketHomePage({
           {categories.map((cat) => (
             <Link
               key={cat.id}
-              href={`/${marketCode}/${cat.slug}`}
+              href={marketPath(marketCode, `/${cat.slug}`)}
               className="rounded-full border border-line px-4 py-1.5 text-sm text-muted hover:bg-elevated hover:text-ink"
             >
               {cat.name}
@@ -166,7 +166,7 @@ export default async function MarketHomePage({
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-ink">Top rated mystery box sites</h2>
           <Link
-            href={`/${marketCode}/compare`}
+            href={marketPath(marketCode, '/compare')}
             className="text-sm font-semibold text-accent hover:underline"
           >
             Compare all

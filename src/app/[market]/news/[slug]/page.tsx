@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { getPostForMarket } from '@/lib/data/content';
 import { createServerSupabase } from '@/lib/supabase/server';
-import { isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
+import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { marketAlternates } from '@/lib/seo';
 
 type Params = { market: string; slug: string };
@@ -41,9 +41,9 @@ export default async function PostPage({ params }: { params: Promise<Params> }) 
     <article className="mx-auto max-w-3xl space-y-6">
       <Breadcrumbs
         items={[
-          { name: MARKET_LABELS[marketCode], path: `/${marketCode}` },
-          { name: 'News', path: `/${marketCode}/news` },
-          { name: post.title, path: `/${marketCode}/news/${post.slug}` },
+          { name: MARKET_LABELS[marketCode], path: marketPath(marketCode) },
+          { name: 'News', path: marketPath(marketCode, '/news') },
+          { name: post.title, path: marketPath(marketCode, `/news/${post.slug}`) },
         ]}
       />
 

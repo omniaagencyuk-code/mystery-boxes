@@ -8,7 +8,7 @@ import { OutboundLink } from '@/components/outbound-link';
 import { Rating } from '@/components/rating';
 import { getActiveOffers, getPublishedReview } from '@/lib/data/content';
 import { getOperatorForReview } from '@/lib/data/operators';
-import { isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
+import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { getRequestGeoContext } from '@/lib/request-context';
 import { marketAlternates, operatorReviewJsonLd } from '@/lib/seo';
 
@@ -58,7 +58,7 @@ export default async function OperatorReviewPage({
     getActiveOffers(id),
   ]);
 
-  const canonicalPath = `/${marketCode}/reviews/${op.slug}`;
+  const canonicalPath = marketPath(marketCode, `/reviews/${op.slug}`);
 
   return (
     <div className="space-y-8">
@@ -76,8 +76,8 @@ export default async function OperatorReviewPage({
 
       <Breadcrumbs
         items={[
-          { name: MARKET_LABELS[marketCode], path: `/${marketCode}` },
-          { name: 'Reviews', path: `/${marketCode}` },
+          { name: MARKET_LABELS[marketCode], path: marketPath(marketCode) },
+          { name: 'Reviews', path: marketPath(marketCode) },
           { name: op.name, path: canonicalPath },
         ]}
       />

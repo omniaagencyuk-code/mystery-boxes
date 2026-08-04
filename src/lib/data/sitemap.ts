@@ -1,4 +1,4 @@
-import type { MarketCode } from '@/lib/geo';
+import { marketPath, type MarketCode } from '@/lib/geo';
 import { createPublicSupabase } from '@/lib/supabase/public';
 
 export interface SitemapEntry {
@@ -29,12 +29,12 @@ export async function getSitemapEntriesForMarket(
   if (!marketRow) return [];
 
   const entries: SitemapEntry[] = [
-    { path: `/${market}` },
-    { path: `/${market}/reviews` },
-    { path: `/${market}/compare` },
-    { path: `/${market}/promo-codes` },
-    { path: `/${market}/categories` },
-    { path: `/${market}/news` },
+    { path: marketPath(market) },
+    { path: marketPath(market, '/reviews') },
+    { path: marketPath(market, '/compare') },
+    { path: marketPath(market, '/promo-codes') },
+    { path: marketPath(market, '/categories') },
+    { path: marketPath(market, '/news') },
   ];
 
   // Published posts (news) for this market.
@@ -44,7 +44,7 @@ export async function getSitemapEntriesForMarket(
     .eq('market_id', marketRow.id)
     .eq('status', 'published');
   for (const post of posts ?? []) {
-    entries.push({ path: `/${market}/news/${post.slug}`, lastModified: post.updated_at });
+    entries.push({ path: marketPath(market, `/news/${post.slug}`), lastModified: post.updated_at });
   }
 
   // Categories available in this market (market-scoped or global).
@@ -53,7 +53,7 @@ export async function getSitemapEntriesForMarket(
     .select('slug, market_id')
     .or(`market_id.eq.${marketRow.id},market_id.is.null`);
   for (const cat of categories ?? []) {
-    entries.push({ path: `/${market}/${cat.slug}` });
+    entries.push({ path: marketPath(market, `/${cat.slug}`) });
   }
 
   // Published pages for this market.
@@ -63,7 +63,7 @@ export async function getSitemapEntriesForMarket(
     .eq('market_id', marketRow.id)
     .eq('status', 'published');
   for (const page of pages ?? []) {
-    entries.push({ path: `/${market}/${page.slug}`, lastModified: page.updated_at });
+    entries.push({ path: marketPath(market, `/${page.slug}`), lastModified: page.updated_at });
   }
 
   // Operators visible in this market.
@@ -89,7 +89,10 @@ export async function getSitemapEntriesForMarket(
       .eq('active', true)
       .in('id', [...visibleIds]);
     for (const op of operators ?? []) {
-      entries.push({ path: `/${market}/reviews/${op.slug}`, lastModified: op.updated_at });
+      entries.push({
+        path: marketPath(market, `/reviews/${op.slug}`),
+        lastModified: op.updated_at,
+      });
     }
   }
 
