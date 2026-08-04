@@ -21,7 +21,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    // Dark by default across the whole site, independent of the visitor's OS
+    // preference, so the colour scheme is consistent everywhere.
+    <html lang="en" className={`dark ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

@@ -26,6 +26,8 @@ export interface OperatorCardProps {
   market: MarketCode;
   variant: OperatorCardVariant;
   featured?: boolean;
+  /** 1-based ranking badge shown on the full card. */
+  rank?: number;
 }
 
 function Logo({ operator, size }: { operator: OperatorSummary; size: number }) {
@@ -85,7 +87,7 @@ function Cta({
   );
 }
 
-export function OperatorCard({ operator, market, variant, featured }: OperatorCardProps) {
+export function OperatorCard({ operator, market, variant, featured, rank }: OperatorCardProps) {
   const href = reviewPath(market, operator.slug);
 
   if (variant === 'table_row') {
@@ -157,7 +159,12 @@ export function OperatorCard({ operator, market, variant, featured }: OperatorCa
 
   // full
   return (
-    <article className="u-glass flex flex-col gap-4 rounded-xl p-5">
+    <article className="u-glass relative flex flex-col gap-4 rounded-xl p-5">
+      {rank != null && (
+        <span className="absolute -left-2 -top-2 flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--grad-from)] to-[var(--grad-to)] text-sm font-black text-white shadow-lg">
+          {rank}
+        </span>
+      )}
       <div className="flex items-start gap-4">
         <Logo operator={operator} size={64} />
         <div className="flex-1">
