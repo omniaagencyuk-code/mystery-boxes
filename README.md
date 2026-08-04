@@ -131,5 +131,9 @@ Compliance furniture is decided only by `operator_type`, in `src/lib/compliance.
 - `src/lib/` env, geo, compliance, SEO, Supabase clients, data access
 - `src/components/` operator card (full / compact / table_row), compliance,
   breadcrumbs, banner
-- `src/app/` routes: `/` chooser, `/[market]`, `/[market]/[slug]`,
-  `/[market]/reviews/[operator]`, `sitemap`, `robots`
+- `src/app/` routes: `/` chooser, `/[market]` home, `/[market]/reviews` (+
+  `/[operator]`), `/[market]/compare`, `/[market]/promo-codes`,
+  `/[market]/categories`, `/[market]/news` (+ `/[slug]`), `/[market]/[slug]`
+  (category or guide/money page), `/go/[slug]` affiliate redirect, `/admin`,
+  `sitemap`, `robots`. Reserved market sub-slugs: `reviews`, `news`, `compare`,
+  `promo-codes`, `categories`.
