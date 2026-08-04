@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
+import heroImage from '../../../public/hero-mystery-box.png';
 import { OperatorCard } from '@/components/operator-card';
 import { getCategoriesForMarket, getMarketPromoOffers } from '@/lib/data/content';
 import { getVisibleOperatorsForMarket } from '@/lib/data/operators';
@@ -95,11 +97,12 @@ export default async function MarketHomePage({
         </div>
 
         <div className="flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/hero-mystery-box.png"
+          <Image
+            src={heroImage}
             alt="A mystery box surrounded by prizes"
-            className="w-full max-w-lg drop-shadow-2xl"
+            priority
+            sizes="(max-width: 1024px) 100vw, 512px"
+            className="h-auto w-full max-w-lg drop-shadow-2xl"
           />
         </div>
       </section>
