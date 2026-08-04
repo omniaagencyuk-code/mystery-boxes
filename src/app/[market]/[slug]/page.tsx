@@ -83,16 +83,12 @@ export default async function MarketSlugPage({
       <div className="space-y-6">
         <Breadcrumbs items={crumbs(category.name)} />
         <header className="space-y-2">
-          <h1 className="text-2xl font-semibold">{category.name}</h1>
-          {category.description && (
-            <p className="text-gray-600 dark:text-gray-300">{category.description}</p>
-          )}
+          <h1 className="text-3xl font-extrabold tracking-tight text-ink">{category.name}</h1>
+          {category.description && <p className="text-muted">{category.description}</p>}
         </header>
 
         {operators.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-300">
-            We have nothing to show here for your region right now.
-          </p>
+          <p className="text-muted">We have nothing to show here for your region right now.</p>
         ) : (
           <div className="space-y-4">
             {operators.map((op) => (
@@ -109,10 +105,10 @@ export default async function MarketSlugPage({
     <article className="space-y-6">
       <Breadcrumbs items={crumbs(page.title)} />
       <header>
-        <h1 className="text-2xl font-semibold">{page.title}</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">{page.title}</h1>
       </header>
       {page.body && (
-        <div className="space-y-3 text-gray-700 dark:text-gray-200">
+        <div className="space-y-3 leading-relaxed text-ink/90">
           {page.body.split(/\n{2,}/).map((para, i) => (
             <p key={i}>{para}</p>
           ))}

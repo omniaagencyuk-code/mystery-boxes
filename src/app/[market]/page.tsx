@@ -42,26 +42,27 @@ export default async function MarketHomePage({
   ]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <Breadcrumbs items={[{ name: MARKET_LABELS[marketCode], path: `/${marketCode}` }]} />
 
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">
-          Mystery box reviews for the {MARKET_LABELS[marketCode]}
+      <header className="space-y-4 text-center">
+        <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          Compare mystery box platforms
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">
-          We test and compare mystery box operators so you can see how they stack
-          up before you spend anything. Here is where things stand today.
+        <p className="mx-auto max-w-2xl text-lg text-muted">
+          We test and compare mystery box operators available in the{' '}
+          {MARKET_LABELS[marketCode]} so you can see how they stack up before you
+          spend anything. Here is where things stand today.
         </p>
       </header>
 
       {categories.length > 0 && (
-        <nav aria-label="Categories" className="flex flex-wrap gap-2">
+        <nav aria-label="Categories" className="flex flex-wrap justify-center gap-2">
           {categories.map((cat) => (
             <Link
               key={cat.id}
               href={`/${marketCode}/${cat.slug}`}
-              className="rounded-full border border-gray-300 px-3 py-1 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+              className="rounded-full border border-line px-4 py-1.5 text-sm text-muted hover:bg-elevated hover:text-ink"
             >
               {cat.name}
             </Link>
@@ -69,33 +70,32 @@ export default async function MarketHomePage({
         </nav>
       )}
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">How the operators compare</h2>
+      <section className="space-y-6">
+        <h2 className="text-xl font-bold text-ink">How the operators compare</h2>
 
         {operators.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-300">
-            We have nothing to show here for your region right now.
-          </p>
+          <p className="text-muted">We have nothing to show here for your region right now.</p>
         ) : (
           <>
             {/* Comparison table using the table_row card variant. */}
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
+            <div className="overflow-x-auto pb-2">
+              <table className="w-full min-w-[860px] overflow-hidden rounded-xl border border-line text-left">
                 <thead>
-                  <tr className="border-b border-gray-300 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
-                    <th className="py-2 pr-3 font-medium">Operator</th>
-                    <th className="px-3 py-2 font-medium">Rating</th>
-                    <th className="px-3 py-2 font-medium">Notes</th>
-                    <th className="py-2 pl-3 text-right font-medium">Visit</th>
+                  <tr className="bg-raised text-xs font-bold uppercase tracking-wider text-muted">
+                    <th className="py-3 pl-6 pr-3">Operator</th>
+                    <th className="px-3 py-3">Rating</th>
+                    <th className="px-3 py-3">Notes</th>
+                    <th className="py-3 pl-3 pr-6 text-right">Visit</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {operators.map((op) => (
+                  {operators.map((op, i) => (
                     <OperatorCard
                       key={op.id}
                       operator={op}
                       market={marketCode}
                       variant="table_row"
+                      featured={i === 0 && op.rating != null}
                     />
                   ))}
                 </tbody>
@@ -103,7 +103,7 @@ export default async function MarketHomePage({
             </div>
 
             {/* Full cards below the table for detail. */}
-            <div className="space-y-4">
+            <div className="grid gap-4">
               {operators.map((op) => (
                 <OperatorCard key={op.id} operator={op} market={marketCode} variant="full" />
               ))}

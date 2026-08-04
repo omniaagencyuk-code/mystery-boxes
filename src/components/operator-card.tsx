@@ -16,6 +16,8 @@ import { reviewPath, type OperatorSummary } from '@/lib/models';
  *   full      logo, rating, summary, pros and cons, CTA
  *   compact   logo, rating, one line, CTA
  *   table_row a <tr> for comparison tables (render inside a <table><tbody>)
+ *
+ * `featured` marks the top pick (Editor's choice) in a comparison table.
  */
 export type OperatorCardVariant = 'full' | 'compact' | 'table_row';
 
@@ -23,6 +25,7 @@ export interface OperatorCardProps {
   operator: OperatorSummary;
   market: MarketCode;
   variant: OperatorCardVariant;
+  featured?: boolean;
 }
 
 function Logo({ operator, size }: { operator: OperatorSummary; size: number }) {
@@ -35,14 +38,14 @@ function Logo({ operator, size }: { operator: OperatorSummary; size: number }) {
         src={operator.logoUrl}
         alt={`${operator.name} logo`}
         style={dimension}
-        className="rounded object-contain"
+        className="rounded-lg border border-line object-contain"
       />
     );
   }
   return (
     <div
       style={dimension}
-      className="flex items-center justify-center rounded bg-gray-100 text-sm font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+      className="flex items-center justify-center rounded-lg border border-line bg-elevated text-sm font-semibold text-muted"
       aria-hidden
     >
       {operator.name.slice(0, 2).toUpperCase()}
@@ -50,47 +53,65 @@ function Logo({ operator, size }: { operator: OperatorSummary; size: number }) {
   );
 }
 
-function Cta({ operator, className }: { operator: OperatorSummary; className?: string }) {
+function Cta({
+  operator,
+  variant = 'primary',
+  className,
+}: {
+  operator: OperatorSummary;
+  variant?: 'primary' | 'surface';
+  className?: string;
+}) {
   const base =
-    'inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors';
+    'inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-bold transition-all';
   if (!operator.trackingUrl) {
     return (
       <span
-        className={`${base} cursor-not-allowed bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 ${className ?? ''}`}
+        className={`${base} cursor-not-allowed bg-elevated text-muted ${className ?? ''}`}
         title="Link coming soon"
       >
         Visit site
       </span>
     );
   }
+  const style =
+    variant === 'primary'
+      ? 'u-btn-primary'
+      : 'border border-line bg-raised text-ink hover:bg-elevated';
   return (
-    <OutboundLink
-      href={operator.trackingUrl}
-      className={`${base} bg-emerald-600 text-white hover:bg-emerald-500 ${className ?? ''}`}
-    >
+    <OutboundLink href={operator.trackingUrl} className={`${base} ${style} ${className ?? ''}`}>
       Visit site
     </OutboundLink>
   );
 }
 
-export function OperatorCard({ operator, market, variant }: OperatorCardProps) {
+export function OperatorCard({ operator, market, variant, featured }: OperatorCardProps) {
   const href = reviewPath(market, operator.slug);
 
   if (variant === 'table_row') {
     return (
-      <tr className="border-b border-gray-200 align-top dark:border-gray-700">
-        <td className="py-3 pr-3">
+      <tr
+        className={`u-glass-alt border-t border-line align-middle ${
+          featured ? 'relative bg-primary/5' : ''
+        }`}
+      >
+        <td className="py-5 pl-6 pr-3">
+          {featured && (
+            <span className="mb-2 inline-block rounded bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-onprimary">
+              Editor&apos;s choice
+            </span>
+          )}
           <div className="flex items-center gap-3">
-            <Logo operator={operator} size={40} />
-            <Link href={href} className="font-medium hover:underline">
+            <Logo operator={operator} size={44} />
+            <Link href={href} className="font-semibold text-ink hover:text-primary">
               {operator.name}
             </Link>
           </div>
         </td>
-        <td className="px-3 py-3">
+        <td className="px-3 py-5">
           <Rating value={operator.rating} />
         </td>
-        <td className="px-3 py-3 text-sm text-gray-600 dark:text-gray-300">
+        <td className="px-3 py-5 text-sm text-muted">
           {operator.summary ?? ''}
           <div className="mt-2">
             <OperatorCompliance
@@ -101,8 +122,8 @@ export function OperatorCard({ operator, market, variant }: OperatorCardProps) {
             />
           </div>
         </td>
-        <td className="py-3 pl-3 text-right">
-          <Cta operator={operator} />
+        <td className="py-5 pl-3 pr-6 text-right">
+          <Cta operator={operator} variant={featured ? 'primary' : 'surface'} />
         </td>
       </tr>
     );
@@ -110,18 +131,16 @@ export function OperatorCard({ operator, market, variant }: OperatorCardProps) {
 
   if (variant === 'compact') {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+      <div className="u-glass flex items-center gap-3 rounded-xl p-3">
         <Logo operator={operator} size={44} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <Link href={href} className="truncate font-medium hover:underline">
+            <Link href={href} className="truncate font-semibold text-ink hover:text-primary">
               {operator.name}
             </Link>
-            <Rating value={operator.rating} />
+            <Rating value={operator.rating} showNumber={false} />
           </div>
-          <p className="truncate text-sm text-gray-600 dark:text-gray-300">
-            {operator.summary ?? ''}
-          </p>
+          <p className="truncate text-sm text-muted">{operator.summary ?? ''}</p>
           <div className="mt-1">
             <OperatorCompliance
               operatorType={operator.operatorType}
@@ -131,26 +150,24 @@ export function OperatorCard({ operator, market, variant }: OperatorCardProps) {
             />
           </div>
         </div>
-        <Cta operator={operator} />
+        <Cta operator={operator} variant="surface" />
       </div>
     );
   }
 
   // full
   return (
-    <article className="flex flex-col gap-4 rounded-xl border border-gray-200 p-5 dark:border-gray-700">
+    <article className="u-glass flex flex-col gap-4 rounded-xl p-5">
       <div className="flex items-start gap-4">
         <Logo operator={operator} size={64} />
         <div className="flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <Link href={href} className="text-lg font-semibold hover:underline">
+            <Link href={href} className="text-lg font-bold text-ink hover:text-primary">
               {operator.name}
             </Link>
             <Rating value={operator.rating} />
           </div>
-          {operator.summary && (
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{operator.summary}</p>
-          )}
+          {operator.summary && <p className="mt-1 text-sm text-muted">{operator.summary}</p>}
         </div>
       </div>
 
@@ -158,10 +175,8 @@ export function OperatorCard({ operator, market, variant }: OperatorCardProps) {
         <div className="grid gap-4 sm:grid-cols-2">
           {operator.pros.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                What we like
-              </h3>
-              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300">
+              <h3 className="text-sm font-bold text-success">What we like</h3>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
                 {operator.pros.map((pro, i) => (
                   <li key={i}>{pro}</li>
                 ))}
@@ -170,10 +185,8 @@ export function OperatorCard({ operator, market, variant }: OperatorCardProps) {
           )}
           {operator.cons.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-rose-700 dark:text-rose-400">
-                What to watch
-              </h3>
-              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300">
+              <h3 className="text-sm font-bold text-danger">What to watch</h3>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
                 {operator.cons.map((con, i) => (
                   <li key={i}>{con}</li>
                 ))}
@@ -192,7 +205,7 @@ export function OperatorCard({ operator, market, variant }: OperatorCardProps) {
           density="block"
         />
         <div className="flex items-center gap-3">
-          <Link href={href} className="text-sm font-medium underline underline-offset-2 hover:no-underline">
+          <Link href={href} className="text-sm font-semibold text-accent underline underline-offset-2 hover:no-underline">
             Read review
           </Link>
           <Cta operator={operator} />

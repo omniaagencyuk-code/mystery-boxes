@@ -1,31 +1,41 @@
 /**
- * Renders an operator rating out of five, to one decimal. Ratings are never
- * fabricated, so a null rating renders a neutral "not yet rated" note instead of
- * inventing a number.
+ * Renders an operator rating out of five as fractional stars plus the number.
+ * Ratings are never fabricated, so a null rating shows "Not yet rated" rather
+ * than inventing a value. No review counts are shown because we do not hold them.
  */
 export function Rating({
   value,
+  showNumber = true,
   className,
 }: {
   value: number | null;
+  showNumber?: boolean;
   className?: string;
 }) {
   if (value == null) {
     return (
-      <span className={`text-xs text-gray-500 dark:text-gray-400 ${className ?? ''}`}>
-        Not yet rated
-      </span>
+      <span className={`text-xs text-muted ${className ?? ''}`}>Not yet rated</span>
     );
   }
 
   const clamped = Math.max(1, Math.min(5, value));
+  const pct = (clamped / 5) * 100;
+
   return (
     <span
-      className={`inline-flex items-baseline gap-1 ${className ?? ''}`}
+      className={`inline-flex items-center gap-1.5 ${className ?? ''}`}
       aria-label={`Rated ${clamped.toFixed(1)} out of 5`}
     >
-      <span className="font-semibold">{clamped.toFixed(1)}</span>
-      <span className="text-xs text-gray-500 dark:text-gray-400">out of 5</span>
+      <span className="relative inline-block align-middle leading-none tracking-[0.1em]" aria-hidden>
+        <span className="text-muted/40">★★★★★</span>
+        <span
+          className="absolute inset-0 overflow-hidden whitespace-nowrap text-star"
+          style={{ width: `${pct}%` }}
+        >
+          ★★★★★
+        </span>
+      </span>
+      {showNumber && <span className="text-sm font-semibold text-ink">{clamped.toFixed(1)}</span>}
     </span>
   );
 }

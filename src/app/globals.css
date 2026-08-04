@@ -1,26 +1,127 @@
 @import "tailwindcss";
 
+/*
+  Design tokens harvested from the Stitch direction (dark glassmorphism, purple
+  to blue accent) and extended with a matching light theme. Semantic tokens are
+  swapped by theme via CSS variables; Tailwind utilities (bg-surface, text-ink,
+  text-primary, ...) reference them through @theme inline below.
+*/
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --base: #ffffff;
+  --surface: #ffffff;
+  --elevated: #f6f5f9;
+  --raised: #efeef4;
+  --line: #e6e3ee;
+  --ink: #1a1626;
+  --muted: #6b6577;
+  --primary: #7c3aed;
+  --onprimary: #ffffff;
+  --accent: #2563eb;
+  --star: #d97706;
+  --success: #059669;
+  --danger: #e11d48;
+
+  /* Translucent glass fills for comparison rows and cards. */
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-alt: rgba(246, 245, 249, 0.72);
+  --grad-from: #7c3aed;
+  --grad-to: #2563eb;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  color-scheme: dark;
+
+  --base: #0a0812;
+  --surface: #15121b;
+  --elevated: #1d1a24;
+  --raised: #2c2833;
+  --line: #372f45;
+  --ink: #e8dfee;
+  --muted: #a79fb4;
+  --primary: #d2bbff;
+  --onprimary: #25005a;
+  --accent: #adc6ff;
+  --star: #fbbf24;
+  --success: #34d399;
+  --danger: #ffb4ab;
+
+  --glass: rgba(44, 40, 51, 0.42);
+  --glass-alt: rgba(34, 30, 40, 0.42);
+  --grad-from: #7c3aed;
+  --grad-to: #0566d9;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not(.light) {
+    color-scheme: dark;
+
+    --base: #0a0812;
+    --surface: #15121b;
+    --elevated: #1d1a24;
+    --raised: #2c2833;
+    --line: #372f45;
+    --ink: #e8dfee;
+    --muted: #a79fb4;
+    --primary: #d2bbff;
+    --onprimary: #25005a;
+    --accent: #adc6ff;
+    --star: #fbbf24;
+    --success: #34d399;
+    --danger: #ffb4ab;
+
+    --glass: rgba(44, 40, 51, 0.42);
+    --glass-alt: rgba(34, 30, 40, 0.42);
+    --grad-from: #7c3aed;
+    --grad-to: #0566d9;
   }
 }
 
+@theme inline {
+  --color-base: var(--base);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-onprimary: var(--onprimary);
+  --color-accent: var(--accent);
+  --color-star: var(--star);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--base);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+@layer components {
+  /* Frosted glass surface used for cards and comparison rows. */
+  .u-glass {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  }
+  .u-glass-alt {
+    background: var(--glass-alt);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Primary gradient CTA, matching the Stitch "Visit Site" button. */
+  .u-btn-primary {
+    background-image: linear-gradient(90deg, var(--grad-from), var(--grad-to));
+    color: #ffffff;
+    transition: box-shadow 0.2s ease, opacity 0.2s ease;
+  }
+  .u-btn-primary:hover {
+    box-shadow: 0 0 20px color-mix(in srgb, var(--grad-from) 40%, transparent);
+  }
 }

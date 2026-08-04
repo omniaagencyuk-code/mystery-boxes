@@ -33,34 +33,62 @@ export default async function MarketLayout({
       {suggestSwitch && suggestSwitch !== current && (
         <MarketSwitchBanner currentMarket={current} suggestMarket={suggestSwitch} />
       )}
-      <header className="border-b border-gray-200 dark:border-gray-800">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-          <Link href={`/${current}`} className="font-semibold">
-            Mystery Boxes
-          </Link>
+
+      <header className="u-glass sticky top-0 z-50 border-x-0 border-t-0">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+          <div className="flex items-center gap-6">
+            <Link href={`/${current}`} className="text-lg font-black tracking-tight text-ink">
+              Mystery-Boxes.com
+            </Link>
+            <nav className="hidden gap-5 text-sm md:flex">
+              <Link href={`/${current}`} className="text-muted hover:text-ink">
+                Compare
+              </Link>
+            </nav>
+          </div>
           <div className="flex items-center gap-4 text-sm">
-            <span className="text-gray-500 dark:text-gray-400">
-              {MARKET_LABELS[current]}
-            </span>
-            <Link href={`/${other}`} className="hover:underline">
+            <span className="hidden text-muted sm:inline">{MARKET_LABELS[current]}</span>
+            <Link
+              href={`/${other}`}
+              className="rounded-lg border border-line px-3 py-1.5 font-semibold text-ink hover:bg-elevated"
+            >
               Switch to {MARKET_LABELS[other]}
             </Link>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:py-12">{children}</main>
 
-      <footer className="border-t border-gray-200 px-4 py-6 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-        <div className="mx-auto max-w-5xl space-y-2">
-          <p>
-            We may earn a commission when you use the links on this site. This
-            does not affect what we write. Marked #ad where relevant.
-          </p>
-          <p>
-            Some listings are shown only to visitors in the region they are
-            available in.
-          </p>
+      <footer className="border-t border-line bg-elevated/50 px-4 py-10 text-sm">
+        <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-3">
+          <div className="space-y-2">
+            <div className="text-lg font-black text-primary">Mystery-Boxes.com</div>
+            <p className="text-xs text-muted">
+              An independent comparison and review directory. We may earn a
+              commission when you use the links on this site. This does not affect
+              what we write. Marked #ad where relevant.
+            </p>
+          </div>
+          <div className="space-y-2 text-muted">
+            <div className="text-xs font-bold uppercase tracking-wider text-ink">Regions</div>
+            <Link href={`/${current}`} className="block hover:text-ink">
+              {MARKET_LABELS[current]}
+            </Link>
+            <Link href={`/${other}`} className="block hover:text-ink">
+              {MARKET_LABELS[other]}
+            </Link>
+          </div>
+          <div className="space-y-2 text-muted">
+            <div className="text-xs font-bold uppercase tracking-wider text-ink">More</div>
+            <Link href="/sitemap.xml" className="block hover:text-ink">
+              Sitemap
+            </Link>
+            <p className="text-xs">
+              Some listings are shown only to visitors in the region they are
+              available in.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

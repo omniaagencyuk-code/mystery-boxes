@@ -6,13 +6,11 @@ import Link from 'next/link';
 export default function NotFound() {
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-6 text-center">
-      <h1 className="text-3xl font-semibold">Page not found</h1>
-      <p className="text-base text-gray-600 dark:text-gray-300">
-        We could not find the page you were looking for.
-      </p>
+      <h1 className="text-3xl font-bold text-ink">Page not found</h1>
+      <p className="text-base text-muted">We could not find the page you were looking for.</p>
       <Link
         href="/"
-        className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+        className="u-btn-primary rounded-lg px-5 py-2.5 text-sm font-bold"
       >
         Go to the homepage
       </Link>

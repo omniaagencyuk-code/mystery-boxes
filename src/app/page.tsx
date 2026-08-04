@@ -25,10 +25,12 @@ export const metadata: Metadata = {
 
 export default function MarketChooser() {
   return (
-    <main className="mx-auto flex min-h-[70vh] max-w-2xl flex-col items-center justify-center gap-8 px-6 text-center">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold">Mystery Boxes</h1>
-        <p className="text-gray-600 dark:text-gray-300">
+    <main className="mx-auto flex min-h-[80vh] max-w-2xl flex-col items-center justify-center gap-10 px-6 text-center">
+      <div className="space-y-3">
+        <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          Mystery-Boxes.com
+        </h1>
+        <p className="text-lg text-muted">
           Choose your region to see the operators available to you.
         </p>
       </div>
@@ -38,7 +40,7 @@ export default function MarketChooser() {
           <Link
             key={market}
             href={`/${market}`}
-            className="rounded-xl border border-gray-300 p-6 text-lg font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+            className="u-glass rounded-xl p-8 text-lg font-bold text-ink transition-all hover:text-primary"
           >
             {MARKET_LABELS[market]}
           </Link>

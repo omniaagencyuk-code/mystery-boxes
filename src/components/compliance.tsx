@@ -28,11 +28,11 @@ export function OperatorCompliance({
 
   const wrap =
     density === 'block'
-      ? 'flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-gray-600 dark:text-gray-300'
-      : 'flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-500 dark:text-gray-400';
+      ? 'flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted'
+      : 'flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted';
 
   const chip =
-    'inline-flex items-center rounded border border-gray-300 px-1.5 py-0.5 dark:border-gray-600';
+    'inline-flex items-center rounded border border-line bg-elevated px-1.5 py-0.5';
 
   return (
     <div className={wrap} aria-label="Compliance information">
@@ -59,7 +59,7 @@ export function OperatorCompliance({
           href={resource.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="underline underline-offset-2 hover:no-underline"
+          className="text-accent underline underline-offset-2 hover:no-underline"
         >
           {resource.label}
         </a>

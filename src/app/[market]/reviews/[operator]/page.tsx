@@ -82,12 +82,12 @@ export default async function OperatorReviewPage({
         ]}
       />
 
-      <header className="space-y-3">
+      <header className="u-glass space-y-3 rounded-xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold">{op.name} review</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-ink">{op.name} review</h1>
           <Rating value={op.rating} />
         </div>
-        {op.summary && <p className="text-gray-600 dark:text-gray-300">{op.summary}</p>}
+        {op.summary && <p className="text-muted">{op.summary}</p>}
         <OperatorCompliance
           operatorType={op.operatorType}
           market={marketCode}
@@ -98,7 +98,7 @@ export default async function OperatorReviewPage({
         {op.trackingUrl && (
           <OutboundLink
             href={op.trackingUrl}
-            className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+            className="u-btn-primary inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-bold"
           >
             Visit {op.name}
           </OutboundLink>
@@ -109,10 +109,8 @@ export default async function OperatorReviewPage({
         <section className="grid gap-6 sm:grid-cols-2">
           {op.pros.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
-                What we like
-              </h2>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-600 dark:text-gray-300">
+              <h2 className="text-lg font-bold text-success">What we like</h2>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-muted">
                 {op.pros.map((pro, i) => (
                   <li key={i}>{pro}</li>
                 ))}
@@ -121,10 +119,8 @@ export default async function OperatorReviewPage({
           )}
           {op.cons.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold text-rose-700 dark:text-rose-400">
-                What to watch
-              </h2>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-gray-600 dark:text-gray-300">
+              <h2 className="text-lg font-bold text-danger">What to watch</h2>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-muted">
                 {op.cons.map((con, i) => (
                   <li key={i}>{con}</li>
                 ))}
@@ -136,29 +132,20 @@ export default async function OperatorReviewPage({
 
       {offers.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Current offers</h2>
+          <h2 className="text-xl font-bold text-ink">Current offers</h2>
           <ul className="space-y-3">
             {offers.map((offer) => (
-              <li
-                key={offer.id}
-                className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-              >
+              <li key={offer.id} className="u-glass rounded-xl p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium">{offer.title}</span>
+                  <span className="font-semibold text-ink">{offer.title}</span>
                   {offer.code && (
-                    <code className="rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-800">
+                    <code className="rounded bg-elevated px-2 py-1 text-xs text-ink">
                       {offer.code}
                     </code>
                   )}
                 </div>
-                {offer.description && (
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {offer.description}
-                  </p>
-                )}
-                {offer.terms && (
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{offer.terms}</p>
-                )}
+                {offer.description && <p className="mt-1 text-sm text-muted">{offer.description}</p>}
+                {offer.terms && <p className="mt-2 text-xs text-muted">{offer.terms}</p>}
               </li>
             ))}
           </ul>
@@ -167,18 +154,16 @@ export default async function OperatorReviewPage({
 
       {review?.body && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Our review</h2>
-          <div className="space-y-3 text-gray-700 dark:text-gray-200">
+          <h2 className="text-xl font-bold text-ink">Our review</h2>
+          <div className="space-y-3 leading-relaxed text-ink/90">
             {review.body.split(/\n{2,}/).map((para, i) => (
               <p key={i}>{para}</p>
             ))}
           </div>
           {review.verdict && (
-            <p className="border-l-4 border-emerald-500 pl-3 font-medium">{review.verdict}</p>
+            <p className="border-l-4 border-primary pl-3 font-semibold text-ink">{review.verdict}</p>
           )}
-          {review.author && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">By {review.author}</p>
-          )}
+          {review.author && <p className="text-sm text-muted">By {review.author}</p>}
         </section>
       )}
     </div>
