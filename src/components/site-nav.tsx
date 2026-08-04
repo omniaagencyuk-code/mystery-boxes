@@ -4,36 +4,106 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
+import type { MenuNode } from '@/lib/data/menu';
 import type { MarketCode } from '@/lib/geo';
 
-interface NavCategory {
-  slug: string;
-  name: string;
+function isInternal(url: string) {
+  return url.startsWith('/');
+}
+
+function MenuLink({
+  node,
+  onNavigate,
+  className,
+}: {
+  node: MenuNode;
+  onNavigate?: () => void;
+  className?: string;
+}) {
+  if (!node.url) return <span className={className}>{node.label}</span>;
+  if (isInternal(node.url) && !node.openInNew) {
+    return (
+      <Link href={node.url} onClick={onNavigate} className={className}>
+        {node.label}
+      </Link>
+    );
+  }
+  return (
+    <a
+      href={node.url}
+      onClick={onNavigate}
+      className={className}
+      target={node.openInNew ? '_blank' : undefined}
+      rel={node.openInNew ? 'noopener noreferrer' : undefined}
+    >
+      {node.label}
+    </a>
+  );
+}
+
+function DesktopItem({ node, active }: { node: MenuNode; active: (url: string | null) => boolean }) {
+  const [open, setOpen] = useState(false);
+
+  if (node.children.length === 0) {
+    return (
+      <MenuLink
+        node={node}
+        className={
+          active(node.url)
+            ? 'border-b-2 border-primary pb-1 font-semibold text-primary'
+            : 'text-muted hover:text-ink'
+        }
+      />
+    );
+  }
+
+  return (
+    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1 text-muted hover:text-ink"
+        aria-expanded={open}
+      >
+        {node.label}
+        <span aria-hidden className="text-xs">▾</span>
+      </button>
+      {open && (
+        <div className="u-glass absolute left-0 top-full mt-2 min-w-44 rounded-lg p-2">
+          {node.url && (
+            <MenuLink
+              node={node}
+              className="block rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-elevated"
+            />
+          )}
+          {node.children.map((child) => (
+            <MenuLink
+              key={child.id}
+              node={child}
+              className="block rounded-md px-3 py-2 text-sm text-muted hover:bg-elevated hover:text-ink"
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function SiteNav({
   current,
   other,
   otherLabel,
-  categories,
+  menu,
 }: {
   current: MarketCode;
   other: MarketCode;
   otherLabel: string;
-  categories: NavCategory[];
+  menu: MenuNode[];
 }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-
-  const links = [
-    { href: `/${current}/reviews`, label: 'Reviews' },
-    { href: `/${current}/compare`, label: 'Compare' },
-    { href: `/${current}/promo-codes`, label: 'Promo codes' },
-    { href: `/${current}/categories`, label: 'Categories' },
-    { href: `/${current}/news`, label: 'News' },
-  ];
-
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const active = (url: string | null) =>
+    !!url && (pathname === url || pathname.startsWith(`${url}/`));
 
   return (
     <header className="u-glass sticky top-0 z-50 border-x-0 border-t-0">
@@ -43,26 +113,14 @@ export function SiteNav({
             Mystery-Boxes.com
           </Link>
           <nav className="hidden items-center gap-5 text-sm md:flex">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={
-                  isActive(link.href)
-                    ? 'border-b-2 border-primary pb-1 font-semibold text-primary'
-                    : 'text-muted hover:text-ink'
-                }
-              >
-                {link.label}
-              </Link>
+            {menu.map((node) => (
+              <DesktopItem key={node.id} node={node} active={active} />
             ))}
           </nav>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-muted lg:inline">
-            {current.toUpperCase()}
-          </span>
+          <span className="hidden text-sm text-muted lg:inline">{current.toUpperCase()}</span>
           <Link
             href={`/${other}`}
             className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold text-ink hover:bg-elevated"
@@ -72,8 +130,8 @@ export function SiteNav({
           <button
             type="button"
             aria-label="Toggle menu"
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((v) => !v)}
             className="rounded-lg border border-line px-3 py-1.5 text-sm text-ink md:hidden"
           >
             Menu
@@ -81,39 +139,32 @@ export function SiteNav({
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {open && (
+      {mobileOpen && (
         <nav className="border-t border-line px-4 py-3 md:hidden">
           <div className="flex flex-col gap-1 text-sm">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className={`rounded-md px-3 py-2 ${
-                  isActive(link.href) ? 'bg-elevated font-semibold text-ink' : 'text-muted'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-            {categories.length > 0 && (
-              <div className="mt-2 border-t border-line pt-2">
-                <div className="px-3 pb-1 text-xs font-bold uppercase tracking-wider text-muted">
-                  Types
-                </div>
-                {categories.map((cat) => (
-                  <Link
-                    key={cat.slug}
-                    href={`/${current}/${cat.slug}`}
-                    onClick={() => setOpen(false)}
-                    className="block rounded-md px-3 py-2 text-muted"
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
+            {menu.map((node) => (
+              <div key={node.id}>
+                <MenuLink
+                  node={node}
+                  onNavigate={() => setMobileOpen(false)}
+                  className={`block rounded-md px-3 py-2 ${
+                    active(node.url) ? 'bg-elevated font-semibold text-ink' : 'text-muted'
+                  }`}
+                />
+                {node.children.length > 0 && (
+                  <div className="ml-3 border-l border-line pl-2">
+                    {node.children.map((child) => (
+                      <MenuLink
+                        key={child.id}
+                        node={child}
+                        onNavigate={() => setMobileOpen(false)}
+                        className="block rounded-md px-3 py-2 text-muted"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
         </nav>
       )}

@@ -13,6 +13,7 @@ const LINKS = [
   { href: '/admin/offers', label: 'Offers' },
   { href: '/admin/affiliate-links', label: 'Affiliate links' },
   { href: '/admin/media', label: 'Media' },
+  { href: '/admin/menu', label: 'Menu' },
 ];
 
 export function AdminNav() {

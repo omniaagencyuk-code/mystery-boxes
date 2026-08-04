@@ -320,6 +320,36 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['affiliate_links']['Insert']>;
         Relationships: [];
       };
+      menu_items: {
+        Row: {
+          id: string;
+          market_id: string;
+          location: string;
+          parent_id: string | null;
+          label: string;
+          url: string | null;
+          position: number;
+          open_in_new: boolean;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          market_id: string;
+          location?: string;
+          parent_id?: string | null;
+          label: string;
+          url?: string | null;
+          position?: number;
+          open_in_new?: boolean;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['menu_items']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -346,3 +376,4 @@ export type AdminRow = Database['public']['Tables']['admins']['Row'];
 export type MediaRow = Database['public']['Tables']['media']['Row'];
 export type PostRow = Database['public']['Tables']['posts']['Row'];
 export type AffiliateLinkRow = Database['public']['Tables']['affiliate_links']['Row'];
+export type MenuItemRow = Database['public']['Tables']['menu_items']['Row'];

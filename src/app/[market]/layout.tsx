@@ -4,8 +4,8 @@ import type { ReactNode } from 'react';
 
 import { MarketSwitchBanner } from '@/components/market-switch-banner';
 import { SiteNav } from '@/components/site-nav';
-import { getCategoriesForMarket } from '@/lib/data/content';
 import { getMarketByCode } from '@/lib/data/markets';
+import { getHeaderMenu } from '@/lib/data/menu';
 import { isSupportedMarket, MARKET_LABELS, SUPPORTED_MARKETS, type MarketCode } from '@/lib/geo';
 import { getRequestGeoContext } from '@/lib/request-context';
 
@@ -28,9 +28,9 @@ export default async function MarketLayout({
 
   // Soft market suggestion, decided by the proxy from the visitor's IP. Absent
   // when there is no mismatch or the banner was dismissed.
-  const [{ suggestSwitch }, categories] = await Promise.all([
+  const [{ suggestSwitch }, menu] = await Promise.all([
     getRequestGeoContext(),
-    getCategoriesForMarket(current),
+    getHeaderMenu(current),
   ]);
 
   return (
@@ -39,12 +39,7 @@ export default async function MarketLayout({
         <MarketSwitchBanner currentMarket={current} suggestMarket={suggestSwitch} />
       )}
 
-      <SiteNav
-        current={current}
-        other={other}
-        otherLabel={MARKET_LABELS[other]}
-        categories={categories.map((c) => ({ slug: c.slug, name: c.name }))}
-      />
+      <SiteNav current={current} other={other} otherLabel={MARKET_LABELS[other]} menu={menu} />
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:py-12">{children}</main>
 
@@ -72,12 +67,14 @@ export default async function MarketLayout({
             <Link href={`/${other}`} className="block hover:text-ink">{MARKET_LABELS[other]}</Link>
           </div>
           <div className="space-y-2 text-muted">
-            <div className="text-xs font-bold uppercase tracking-wider text-ink">More</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-ink">Legal</div>
+            <Link href={`/${current}/about`} className="block hover:text-ink">About us</Link>
+            <Link href={`/${current}/privacy-policy`} className="block hover:text-ink">Privacy policy</Link>
+            <Link href={`/${current}/terms`} className="block hover:text-ink">Terms of use</Link>
+            <Link href={`/${current}/responsible-gambling`} className="block hover:text-ink">
+              Responsible gambling
+            </Link>
             <Link href="/sitemap.xml" className="block hover:text-ink">Sitemap</Link>
-            <p className="text-xs">
-              Some listings are shown only to visitors in the region they are
-              available in.
-            </p>
           </div>
         </div>
       </footer>
