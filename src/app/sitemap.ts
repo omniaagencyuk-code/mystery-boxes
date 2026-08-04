@@ -1,34 +1,35 @@
 import type { MetadataRoute } from 'next';
 
 import { getSitemapEntriesForMarket } from '@/lib/data/sitemap';
-import { SUPPORTED_MARKETS, isSupportedMarket } from '@/lib/geo';
+import { SUPPORTED_MARKETS } from '@/lib/geo';
 import { absoluteUrl } from '@/lib/seo';
 
-// One sitemap per market, exposed under /sitemap/uk.xml and /sitemap/us.xml with
-// an auto-generated index at /sitemap.xml. The US market lives at the root, so
-// its home entry is '/'; the UK market lives under /uk.
-//
-// Generated at request time so it reflects the current database and does not run
-// Supabase queries during the build.
+// A single sitemap served at /sitemap.xml, covering every market. The US lives
+// at the root and the UK under /uk, so both are combined here. Generated at
+// request time so it reflects the current database and does not run Supabase
+// queries during the build.
 export const dynamic = 'force-dynamic';
 
-export async function generateSitemaps() {
-  return SUPPORTED_MARKETS.map((market) => ({ id: market }));
-}
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const perMarket = await Promise.all(
+    SUPPORTED_MARKETS.map((market) => getSitemapEntriesForMarket(market)),
+  );
 
-export default async function sitemap({
-  id,
-}: {
-  id: Promise<string>;
-}): Promise<MetadataRoute.Sitemap> {
-  const market = await id;
-  if (!isSupportedMarket(market)) return [];
+  const seen = new Set<string>();
+  const urls: MetadataRoute.Sitemap = [];
 
-  const entries = await getSitemapEntriesForMarket(market);
+  for (const entries of perMarket) {
+    for (const entry of entries) {
+      const url = absoluteUrl(entry.path);
+      if (seen.has(url)) continue;
+      seen.add(url);
+      urls.push({
+        url,
+        lastModified: entry.lastModified ? new Date(entry.lastModified) : undefined,
+        changeFrequency: 'weekly',
+      });
+    }
+  }
 
-  return entries.map((entry) => ({
-    url: absoluteUrl(entry.path),
-    lastModified: entry.lastModified ? new Date(entry.lastModified) : undefined,
-    changeFrequency: 'weekly' as const,
-  }));
+  return urls;
 }
