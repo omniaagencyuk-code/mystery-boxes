@@ -27,7 +27,11 @@ export default function AdminLoginPage() {
       return;
     }
 
-    const next = new URLSearchParams(window.location.search).get('next') || '/admin';
+    // Only allow same-site relative redirects. A value like "https://evil.com"
+    // or "//evil.com" must never be followed (open redirect).
+    const requested = new URLSearchParams(window.location.search).get('next');
+    const next =
+      requested && requested.startsWith('/') && !requested.startsWith('//') ? requested : '/admin';
     window.location.assign(next);
   }
 
