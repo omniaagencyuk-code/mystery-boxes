@@ -22,6 +22,11 @@ export function numOrNull(fd: FormData, key: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** All values for a repeated field (e.g. a multi-select), as strings. */
+export function strList(fd: FormData, key: string): string[] {
+  return fd.getAll(key).filter((v): v is string => typeof v === 'string' && v.length > 0);
+}
+
 /** One item per line, trimmed, blanks dropped. Used for pros/cons arrays. */
 export function lines(fd: FormData, key: string): string[] {
   return str(fd, key)
