@@ -36,11 +36,13 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['markets']['Insert']>;
+        Relationships: [];
       };
       operator_types: {
         Row: { id: string; slug: OperatorTypeSlug; name: string };
         Insert: { id?: string; slug: OperatorTypeSlug; name: string };
         Update: Partial<Database['public']['Tables']['operator_types']['Insert']>;
+        Relationships: [];
       };
       operators: {
         Row: {
@@ -80,6 +82,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database['public']['Tables']['operators']['Insert']>;
+        Relationships: [];
       };
       operator_markets: {
         Row: {
@@ -95,6 +98,7 @@ export interface Database {
           visible?: boolean;
         };
         Update: Partial<Database['public']['Tables']['operator_markets']['Insert']>;
+        Relationships: [];
       };
       offers: {
         Row: {
@@ -120,6 +124,7 @@ export interface Database {
           active?: boolean;
         };
         Update: Partial<Database['public']['Tables']['offers']['Insert']>;
+        Relationships: [];
       };
       categories: {
         Row: {
@@ -137,11 +142,13 @@ export interface Database {
           market_id?: string | null;
         };
         Update: Partial<Database['public']['Tables']['categories']['Insert']>;
+        Relationships: [];
       };
       operator_categories: {
         Row: { operator_id: string; category_id: string };
         Insert: { operator_id: string; category_id: string };
         Update: Partial<Database['public']['Tables']['operator_categories']['Insert']>;
+        Relationships: [];
       };
       reviews: {
         Row: {
@@ -167,6 +174,7 @@ export interface Database {
           status?: PublishStatus;
         };
         Update: Partial<Database['public']['Tables']['reviews']['Insert']>;
+        Relationships: [];
       };
       pages: {
         Row: {
@@ -192,6 +200,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database['public']['Tables']['pages']['Insert']>;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
