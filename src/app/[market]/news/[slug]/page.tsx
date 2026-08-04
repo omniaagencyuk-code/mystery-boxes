@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { Markdown } from '@/components/markdown';
 import { getPostForMarket } from '@/lib/data/content';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
@@ -60,13 +61,7 @@ export default async function PostPage({ params }: { params: Promise<Params> }) 
         <img src={coverUrl} alt="" className="w-full rounded-xl border border-line object-cover" />
       )}
 
-      {post.body && (
-        <div className="space-y-4 leading-relaxed text-ink/90">
-          {post.body.split(/\n{2,}/).map((para, i) => (
-            <p key={i}>{para}</p>
-          ))}
-        </div>
-      )}
+      {post.body && <Markdown>{post.body}</Markdown>}
     </article>
   );
 }

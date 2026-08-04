@@ -146,6 +146,30 @@ export const getMarketPromoOffers = cache(
   },
 );
 
+/**
+ * Published guide pages for a market. Guides are stored in `pages` with a slug
+ * prefixed `guides/`, so they live at /guides/<slug> and stay out of the root
+ * `/[slug]` namespace.
+ */
+export const getGuidesForMarket = cache(
+  async (
+    marketCode: MarketCode,
+  ): Promise<{ slug: string; title: string; meta_description: string | null }[]> => {
+    const market = await getMarketByCode(marketCode);
+    if (!market) return [];
+
+    const supabase = await createServerSupabase();
+    const { data } = await supabase
+      .from('pages')
+      .select('slug, title, meta_description')
+      .eq('market_id', market.id)
+      .eq('status', 'published')
+      .like('slug', 'guides/%')
+      .order('title');
+    return data ?? [];
+  },
+);
+
 /** A published page (guide or money page) for a market. */
 export const getPageForMarket = cache(
   async (marketCode: MarketCode, slug: string): Promise<PageRow | null> => {
