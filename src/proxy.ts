@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { isOperatorGeoBlockedViaRest } from '@/lib/data/geo-block';
+import { updateSession } from '@/lib/supabase/session';
 import {
   BANNER_DISMISS_COOKIE,
   GEO_HEADERS,
@@ -54,6 +55,23 @@ function readGeo(request: NextRequest): { country: string | null; region: string
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Admin area: refresh the auth session and require a logged-in user. The admin
+  // layout additionally verifies the user is on the admins allowlist. The login
+  // page is the one admin path reachable without a session.
+  if (pathname.startsWith('/admin')) {
+    const { response, userId } = await updateSession(request);
+    const isLogin = pathname === '/admin/login';
+    if (!userId && !isLogin) {
+      const loginUrl = new URL('/admin/login', request.url);
+      loginUrl.searchParams.set('next', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (userId && isLogin) {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+    return response;
+  }
 
   const { country, region } = readGeo(request);
   const chain = detectMarketChain(country, region);
