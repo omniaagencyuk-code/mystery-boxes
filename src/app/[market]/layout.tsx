@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { MarketSwitchBanner } from '@/components/market-switch-banner';
 import { getMarketByCode } from '@/lib/data/markets';
 import { isSupportedMarket, MARKET_LABELS, SUPPORTED_MARKETS, type MarketCode } from '@/lib/geo';
+import { getRequestGeoContext } from '@/lib/request-context';
 
 export default async function MarketLayout({
   children,
@@ -22,8 +24,15 @@ export default async function MarketLayout({
   const current = market as MarketCode;
   const other = SUPPORTED_MARKETS.find((m) => m !== current) as MarketCode;
 
+  // Soft market suggestion, decided by the proxy from the visitor's IP. Absent
+  // when there is no mismatch or the banner was dismissed.
+  const { suggestSwitch } = await getRequestGeoContext();
+
   return (
     <div className="flex min-h-full flex-col">
+      {suggestSwitch && suggestSwitch !== current && (
+        <MarketSwitchBanner currentMarket={current} suggestMarket={suggestSwitch} />
+      )}
       <header className="border-b border-gray-200 dark:border-gray-800">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
           <Link href={`/${current}`} className="font-semibold">

@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mystery-Boxes.com
 
-## Getting Started
+An affiliate comparison and review site for mystery box operators, serving the UK
+and US markets from one codebase. No payments, no visitor accounts, no prizes.
+All monetisation is via outbound tracking links.
 
-First, run the development server:
+Stack: Next.js (App Router, TypeScript), Tailwind CSS, Supabase, Vercel.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Local setup
+
+1. Install dependencies.
+
+   ```bash
+   npm install
+   ```
+
+2. Create `.env.local` from the example and fill in your Supabase values.
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+   Use the current Supabase key format: a publishable key (`sb_publishable_...`)
+   and a secret key (`sb_secret_...`). The secret key is server side only.
+
+3. Apply the database schema. All schema lives in `supabase/migrations/` as
+   timestamped SQL. With the Supabase CLI linked to your project:
+
+   ```bash
+   supabase db push
+   ```
+
+   For local development, `supabase db reset` also applies `supabase/seed.sql`,
+   which loads clearly marked placeholder operators, offers, reviews and pages.
+   That seed file is never pushed to a remote database.
+
+4. Run the dev server.
+
+   ```bash
+   npm run dev
+   ```
+
+## How geo works
+
+Two separate behaviours, kept apart in the code:
+
+- Soft market suggestion. The proxy (`src/proxy.ts`) reads the visitor country
+  from Vercel headers and, if it differs from the market being viewed, shows a
+  dismissable switch banner. It never redirects on IP, so the UK section stays
+  indexable by mostly-US crawlers.
+- Hard geo block. Operators flagged `requires_geo_block` for the visitor's
+  detected market return a 404 on their review page and are excluded from every
+  listing. The proxy 404s early; the review page re-checks against the database
+  as the authoritative backstop.
+
+### Simulating geo locally
+
+Vercel geo headers are not present locally. In development you can simulate a
+location with a query param or cookie:
+
+```
+http://localhost:3000/uk?geo=US-WA   # United States, Washington
+http://localhost:3000/uk?geo=GB      # United Kingdom
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Compliance
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Compliance furniture is decided only by `operator_type`, in `src/lib/compliance.ts`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `digital_unboxing`: 18+, BeGambleAware, licence details when present, #ad, and
+  GamStop on UK pages.
+- `physical_retail`: affiliate disclosure (#ad) only, never gambling messaging.
 
-## Learn More
+## Open items to confirm before launch
 
-To learn more about Next.js, take a look at the following resources:
+- US responsible-gambling reference for digital operators. BeGambleAware and
+  GamStop are UK bodies (GamStop is already UK-only). No US equivalent has been
+  invented; confirm the correct US reference. See the note in
+  `src/lib/compliance.ts`.
+- Replace all `PLACEHOLDER` seed content with verified operator data, ratings,
+  licence numbers and offer terms.
+- Set `NEXT_PUBLIC_SITE_URL` in production so canonical, hreflang and sitemap
+  URLs are absolute and correct.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `supabase/migrations/` timestamped schema with RLS from creation
+- `supabase/seed.sql` local-dev placeholder content
+- `src/proxy.ts` geo detection, soft suggestion, hard block
+- `src/lib/` env, geo, compliance, SEO, Supabase clients, data access
+- `src/components/` operator card (full / compact / table_row), compliance,
+  breadcrumbs, banner
+- `src/app/` routes: `/` chooser, `/[market]`, `/[market]/[slug]`,
+  `/[market]/reviews/[operator]`, `sitemap`, `robots`

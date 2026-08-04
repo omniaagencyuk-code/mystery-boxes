@@ -29,8 +29,8 @@ function Logo({ operator, size }: { operator: OperatorSummary; size: number }) {
   const dimension = { width: size, height: size };
   if (operator.logoUrl) {
     // Plain img avoids next/image remote-host config for arbitrary logo hosts.
-    // eslint-disable-next-line @next/next/no-img-element
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={operator.logoUrl}
         alt={`${operator.name} logo`}
