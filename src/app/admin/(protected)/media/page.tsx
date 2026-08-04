@@ -1,0 +1,64 @@
+import Link from 'next/link';
+
+import { deleteMedia, uploadMedia } from './actions';
+import { DeleteButton, EmptyState, Field, inputCls, PageHeader } from '@/components/admin/ui';
+import { adminPageClient } from '@/lib/admin/db';
+
+export default async function MediaListPage() {
+  const db = await adminPageClient();
+  if (!db) return null;
+
+  const { data: media } = await db.from('media').select('*').order('created_at', { ascending: false });
+
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Media" />
+
+      <form action={uploadMedia} className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+        <h2 className="text-sm font-semibold">Upload</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label="File" htmlFor="file">
+            <input id="file" name="file" type="file" required className={inputCls} />
+          </Field>
+          <Field label="Title" htmlFor="title">
+            <input id="title" name="title" className={inputCls} />
+          </Field>
+          <Field label="Alt text" htmlFor="alt">
+            <input id="alt" name="alt" className={inputCls} />
+          </Field>
+        </div>
+        <button type="submit" className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500">
+          Upload
+        </button>
+      </form>
+
+      {!media || media.length === 0 ? (
+        <EmptyState>No media yet.</EmptyState>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {media.map((m) => (
+            <div key={m.id} className="rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+              {m.url && m.mime_type?.startsWith('image/') ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={m.url} alt={m.alt ?? ''} className="mb-2 h-32 w-full rounded object-cover" />
+              ) : (
+                <div className="mb-2 flex h-32 items-center justify-center rounded bg-gray-100 text-xs text-gray-500 dark:bg-gray-800">
+                  {m.mime_type ?? 'file'}
+                </div>
+              )}
+              <div className="truncate text-sm" title={m.title ?? m.path}>
+                {m.title ?? m.path}
+              </div>
+              <div className="mt-1 flex items-center justify-between text-xs">
+                <Link href={`/admin/media/${m.id}`} className="text-emerald-700 hover:underline dark:text-emerald-400">
+                  Edit
+                </Link>
+                <DeleteButton action={deleteMedia} id={m.id} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

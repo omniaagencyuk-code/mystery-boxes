@@ -63,6 +63,47 @@ http://localhost:3000/uk?geo=US-WA   # United States, Washington
 http://localhost:3000/uk?geo=GB      # United Kingdom
 ```
 
+## Admin dashboard
+
+The dashboard lives at `/admin` and manages operators, reviews, categories,
+pages, posts, offers, affiliate links and media. It is never indexed.
+
+Access model:
+
+- Admin sign in uses Supabase Auth (email and password). There is no public
+  sign-up.
+- Only users on the `admins` allowlist can use it. Everyone else sees a
+  not-authorised message.
+- All writes run server side with the secret key after the session and admin
+  status are verified. Public RLS stays read-only.
+
+### Create the first admin
+
+1. In the Supabase dashboard, go to Authentication and add a user with an email
+   and password.
+2. Add that user to the allowlist. In the SQL editor run:
+
+   ```sql
+   insert into public.admins (user_id, email, name, active)
+   select id, email, 'Your name', true
+   from auth.users
+   where email = 'you@example.com';
+   ```
+
+3. Sign in at `/admin/login`.
+
+### Media storage
+
+Run `supabase/storage-setup.sql` once against your project. It creates a public
+`media` bucket and a public read policy. Uploads and deletes happen server side
+with the secret key.
+
+### Affiliate links
+
+Manage outbound links under Affiliate links. Each has a slug and is reachable at
+`/go/<slug>`, which records a click and redirects to the target. Use these
+cloaked links in content instead of raw affiliate URLs.
+
 ## Compliance
 
 Compliance furniture is decided only by `operator_type`, in `src/lib/compliance.ts`:
