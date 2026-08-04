@@ -6,7 +6,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { OperatorCompliance } from '@/components/compliance';
 import { OutboundLink } from '@/components/outbound-link';
 import { getMarketPromoOffers } from '@/lib/data/content';
-import { isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
+import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { reviewPath } from '@/lib/models';
 import { getRequestGeoContext } from '@/lib/request-context';
 import { marketAlternates } from '@/lib/seo';
@@ -35,8 +35,8 @@ export default async function PromoCodesPage({ params }: { params: Promise<Param
     <div className="space-y-8">
       <Breadcrumbs
         items={[
-          { name: MARKET_LABELS[marketCode], path: `/${marketCode}` },
-          { name: 'Promo codes', path: `/${marketCode}/promo-codes` },
+          { name: MARKET_LABELS[marketCode], path: marketPath(marketCode) },
+          { name: 'Promo codes', path: marketPath(marketCode, '/promo-codes') },
         ]}
       />
       <header className="space-y-2">

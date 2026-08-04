@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 import type { MenuNode } from '@/lib/data/menu';
-import type { MarketCode } from '@/lib/geo';
+import { marketPath, type MarketCode } from '@/lib/geo';
 
 function isInternal(url: string) {
   return url.startsWith('/');
@@ -109,7 +109,7 @@ export function SiteNav({
     <header className="u-glass sticky top-0 z-50 border-x-0 border-t-0">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
         <div className="flex items-center gap-6">
-          <Link href={`/${current}`} className="text-lg font-black tracking-tight text-ink">
+          <Link href={marketPath(current)} className="text-lg font-black tracking-tight text-ink">
             Mystery-Boxes.com
           </Link>
           <nav className="hidden items-center gap-5 text-sm md:flex">
@@ -122,7 +122,7 @@ export function SiteNav({
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-muted lg:inline">{current.toUpperCase()}</span>
           <Link
-            href={`/${other}`}
+            href={marketPath(other)}
             className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold text-ink hover:bg-elevated"
           >
             Switch to {otherLabel}

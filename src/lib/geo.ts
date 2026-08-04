@@ -21,6 +21,28 @@ export const MARKET_LABELS: Record<MarketCode, string> = {
   us: 'United States',
 };
 
+/**
+ * The market served at the site root (no path prefix). The US is the default
+ * region: it lives at the root, and the UK lives under /uk. International
+ * visitors land on the US site at the root without any /us prefix.
+ */
+export const ROOT_MARKET: MarketCode = 'us';
+
+/** URL prefix for a market: '' for the root market, '/uk' otherwise. */
+export function marketBasePath(market: MarketCode): string {
+  return market === ROOT_MARKET ? '' : `/${market}`;
+}
+
+/**
+ * Build an app path for a market. `sub` is the part after the market segment,
+ * e.g. '/reviews/some-operator' or '' for the market home. The root market's
+ * home is '/'.
+ */
+export function marketPath(market: MarketCode, sub = ''): string {
+  const path = `${marketBasePath(market)}${sub}`;
+  return path === '' ? '/' : path;
+}
+
 // Request headers middleware sets for the app to read. Prefixed x-mb- so they
 // are easy to spot and cannot collide with platform headers.
 export const GEO_HEADERS = {

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { OperatorCard } from '@/components/operator-card';
 import { getVisibleOperatorsForMarket } from '@/lib/data/operators';
-import { isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
+import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { getRequestGeoContext } from '@/lib/request-context';
 import { marketAlternates } from '@/lib/seo';
 
@@ -32,8 +32,8 @@ export default async function ReviewsIndexPage({ params }: { params: Promise<Par
     <div className="space-y-8">
       <Breadcrumbs
         items={[
-          { name: MARKET_LABELS[marketCode], path: `/${marketCode}` },
-          { name: 'Reviews', path: `/${marketCode}/reviews` },
+          { name: MARKET_LABELS[marketCode], path: marketPath(marketCode) },
+          { name: 'Reviews', path: marketPath(marketCode, '/reviews') },
         ]}
       />
       <header className="space-y-2">

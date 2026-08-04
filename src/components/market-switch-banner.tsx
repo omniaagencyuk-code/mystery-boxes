@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 
-import { BANNER_DISMISS_COOKIE, MARKET_LABELS, type MarketCode } from '@/lib/geo';
+import {
+  BANNER_DISMISS_COOKIE,
+  marketBasePath,
+  MARKET_LABELS,
+  type MarketCode,
+} from '@/lib/geo';
 
 /**
  * Soft market suggestion. Shown when the visitor's detected market differs from
@@ -30,13 +35,22 @@ export function MarketSwitchBanner({
   }
 
   function targetHref() {
-    if (typeof window === 'undefined') return `/${suggestMarket}`;
+    if (typeof window === 'undefined') return marketBasePath(suggestMarket) || '/';
     const { pathname, search } = window.location;
-    const swapped = pathname.replace(
-      new RegExp(`^/${currentMarket}(?=/|$)`),
-      `/${suggestMarket}`,
-    );
-    return `${swapped}${search}`;
+
+    // Strip the current market's prefix to get the sub-path, then re-apply the
+    // suggested market's prefix. The root market has no prefix.
+    const curBase = marketBasePath(currentMarket);
+    let sub =
+      curBase && (pathname === curBase || pathname.startsWith(`${curBase}/`))
+        ? pathname.slice(curBase.length)
+        : curBase
+          ? ''
+          : pathname;
+    if (sub === '/') sub = '';
+
+    const target = `${marketBasePath(suggestMarket)}${sub}` || '/';
+    return `${target}${search}`;
   }
 
   return (

@@ -1,4 +1,4 @@
-import type { MarketCode } from '@/lib/geo';
+import { marketPath, type MarketCode } from '@/lib/geo';
 import type { OperatorTypeSlug } from '@/lib/supabase/types';
 
 /**
@@ -24,5 +24,5 @@ export interface OperatorSummary {
 
 /** Build the canonical review URL for an operator within a market. */
 export function reviewPath(market: MarketCode, slug: string): string {
-  return `/${market}/reviews/${slug}`;
+  return marketPath(market, `/reviews/${slug}`);
 }

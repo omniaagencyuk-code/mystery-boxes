@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { getCategoriesForMarket } from '@/lib/data/content';
-import { isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
+import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { marketAlternates } from '@/lib/seo';
 
 type Params = { market: string };
@@ -30,8 +30,8 @@ export default async function CategoriesHubPage({ params }: { params: Promise<Pa
     <div className="space-y-8">
       <Breadcrumbs
         items={[
-          { name: MARKET_LABELS[marketCode], path: `/${marketCode}` },
-          { name: 'Categories', path: `/${marketCode}/categories` },
+          { name: MARKET_LABELS[marketCode], path: marketPath(marketCode) },
+          { name: 'Categories', path: marketPath(marketCode, '/categories') },
         ]}
       />
       <header className="space-y-2">
@@ -46,7 +46,7 @@ export default async function CategoriesHubPage({ params }: { params: Promise<Pa
           {categories.map((cat) => (
             <Link
               key={cat.id}
-              href={`/${marketCode}/${cat.slug}`}
+              href={marketPath(marketCode, `/${cat.slug}`)}
               className="u-glass group rounded-xl p-5"
             >
               <h2 className="font-bold text-ink group-hover:text-primary">{cat.name}</h2>

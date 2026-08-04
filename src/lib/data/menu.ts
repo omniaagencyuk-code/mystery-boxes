@@ -1,7 +1,7 @@
 import { cache } from 'react';
 
 import { getMarketByCode } from '@/lib/data/markets';
-import type { MarketCode } from '@/lib/geo';
+import { marketPath, type MarketCode } from '@/lib/geo';
 import { createServerSupabase } from '@/lib/supabase/server';
 
 export interface MenuNode {
@@ -33,20 +33,20 @@ function defaultMenu(market: MarketCode, location: MenuLocation): MenuNode[] {
       {
         ...leaf('Explore', null),
         children: [
-          leaf('Reviews', `/${market}/reviews`),
-          leaf('Compare', `/${market}/compare`),
-          leaf('Promo codes', `/${market}/promo-codes`),
-          leaf('Categories', `/${market}/categories`),
-          leaf('News', `/${market}/news`),
+          leaf('Reviews', marketPath(market, '/reviews')),
+          leaf('Compare', marketPath(market, '/compare')),
+          leaf('Promo codes', marketPath(market, '/promo-codes')),
+          leaf('Categories', marketPath(market, '/categories')),
+          leaf('News', marketPath(market, '/news')),
         ],
       },
       {
         ...leaf('Legal', null),
         children: [
-          leaf('About us', `/${market}/about`),
-          leaf('Privacy policy', `/${market}/privacy-policy`),
-          leaf('Terms of use', `/${market}/terms`),
-          leaf('Responsible gambling', `/${market}/responsible-gambling`),
+          leaf('About us', marketPath(market, '/about')),
+          leaf('Privacy policy', marketPath(market, '/privacy-policy')),
+          leaf('Terms of use', marketPath(market, '/terms')),
+          leaf('Responsible gambling', marketPath(market, '/responsible-gambling')),
         ],
       },
       { ...leaf('More', null), children: [leaf('Sitemap', '/sitemap.xml')] },
@@ -54,11 +54,11 @@ function defaultMenu(market: MarketCode, location: MenuLocation): MenuNode[] {
   }
 
   return [
-    leaf('Reviews', `/${market}/reviews`),
-    leaf('Compare', `/${market}/compare`),
-    leaf('Promo codes', `/${market}/promo-codes`),
-    leaf('Categories', `/${market}/categories`),
-    leaf('News', `/${market}/news`),
+    leaf('Reviews', marketPath(market, '/reviews')),
+    leaf('Compare', marketPath(market, '/compare')),
+    leaf('Promo codes', marketPath(market, '/promo-codes')),
+    leaf('Categories', marketPath(market, '/categories')),
+    leaf('News', marketPath(market, '/news')),
   ];
 }
 

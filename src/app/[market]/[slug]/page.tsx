@@ -5,7 +5,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { OperatorCard } from '@/components/operator-card';
 import { getCategoryForMarket, getPageForMarket } from '@/lib/data/content';
 import { getVisibleOperatorsForCategory } from '@/lib/data/operators';
-import { isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
+import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import type { CategoryRow, PageRow } from '@/lib/supabase/types';
 import { getRequestGeoContext } from '@/lib/request-context';
 import { marketAlternates } from '@/lib/seo';
@@ -18,8 +18,17 @@ type Params = { market: string; slug: string };
  * static route, so it never reaches here.
  */
 // Static sections own these URLs, so a category or page must never resolve here
-// under the same slug.
-const RESERVED = new Set(['reviews', 'news', 'compare', 'promo-codes', 'categories']);
+// under the same slug. 'uk' and 'us' are reserved too: 'uk' is the UK section
+// and 'us' redirects to the root.
+const RESERVED = new Set([
+  'reviews',
+  'news',
+  'compare',
+  'promo-codes',
+  'categories',
+  'uk',
+  'us',
+]);
 
 async function resolve(
   market: MarketCode,
@@ -76,8 +85,8 @@ export default async function MarketSlugPage({
   if (!resolved) notFound();
 
   const crumbs = (name: string) => [
-    { name: MARKET_LABELS[marketCode], path: `/${marketCode}` },
-    { name, path: `/${marketCode}/${slug}` },
+    { name: MARKET_LABELS[marketCode], path: marketPath(marketCode) },
+    { name, path: marketPath(marketCode, `/${slug}`) },
   ];
 
   if (resolved.kind === 'category') {

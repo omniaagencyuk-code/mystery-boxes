@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { siteUrl } from '@/lib/env';
-import { SUPPORTED_MARKETS, type MarketCode } from '@/lib/geo';
+import { marketPath, ROOT_MARKET, SUPPORTED_MARKETS, type MarketCode } from '@/lib/geo';
 
 /** Absolute URL for a path, using the configured site URL. */
 export function absoluteUrl(path: string): string {
@@ -20,9 +20,10 @@ const HREFLANG: Record<MarketCode, string> = {
  * at the same sub-path. `pathWithinMarket` is the part after the market segment,
  * e.g. '/reviews/some-operator' or '' for the market homepage.
  *
- * Equivalent UK and US URLs are declared as regional variants so search engines
- * treat them as alternates rather than duplicates. x-default points at the root
- * market chooser.
+ * The US is served at the root (no /us prefix) and the UK under /uk, so URLs are
+ * built with marketPath. Equivalent UK and US URLs are declared as regional
+ * variants so search engines treat them as alternates rather than duplicates.
+ * x-default points at the root (the default US region).
  */
 export function marketAlternates(
   market: MarketCode,
@@ -32,13 +33,15 @@ export function marketAlternates(
     ? `/${pathWithinMarket}`
     : pathWithinMarket;
 
-  const languages: Record<string, string> = { 'x-default': absoluteUrl('/') };
+  const languages: Record<string, string> = {
+    'x-default': absoluteUrl(marketPath(ROOT_MARKET, sub)),
+  };
   for (const code of SUPPORTED_MARKETS) {
-    languages[HREFLANG[code]] = absoluteUrl(`/${code}${sub}`);
+    languages[HREFLANG[code]] = absoluteUrl(marketPath(code, sub));
   }
 
   return {
-    canonical: absoluteUrl(`/${market}${sub}`),
+    canonical: absoluteUrl(marketPath(market, sub)),
     languages,
   };
 }

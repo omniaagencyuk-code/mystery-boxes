@@ -7,8 +7,8 @@ import {
   GEO_HEADERS,
   GEO_OVERRIDE_COOKIE,
   GEO_OVERRIDE_PARAM,
+  ROOT_MARKET,
   detectMarketChain,
-  isSupportedMarket,
   parseGeoOverride,
   rootMarketFromChain,
 } from '@/lib/geo';
@@ -17,10 +17,14 @@ import {
  * Proxy (formerly the middleware file convention, renamed in Next 16).
  * Responsibilities, kept strictly separate:
  *
+ *  - Market ROUTING: the US is the default region served at the site root (no
+ *    prefix) and the UK lives under /uk. Root app paths are rewritten internally
+ *    to the /us route tree while the browser URL stays clean, and explicit /us
+ *    URLs are permanently redirected to their clean root equivalent. We NEVER
+ *    hard-redirect based on IP.
+ *
  *  - Geo DETECTION: read the visitor country/region from Vercel headers and pass
- *    a market context to the app via request headers. We NEVER hard-redirect on
- *    IP. Most search crawlers originate in the US, and a redirect would stop the
- *    UK section being indexed.
+ *    a market context to the app via request headers.
  *
  *  - Soft market SUGGESTION: if the detected market differs from the market the
  *    visitor is viewing, and they have not dismissed the banner, signal the app
@@ -33,7 +37,8 @@ import {
  *    wholesale, only by the same per-market rule as everyone else.
  */
 
-const REVIEW_PATH = /^\/(uk|us)\/reviews\/([^/]+)\/?$/;
+// Matches a review page at the root (/reviews/x) or under the UK (/uk/reviews/x).
+const REVIEW_PATH = /^(?:\/uk)?\/reviews\/([^/]+)\/?$/;
 
 function readGeo(request: NextRequest): { country: string | null; region: string | null } {
   // Production: Vercel geolocation headers (request.geo was removed in Next 16).
@@ -73,17 +78,27 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
+  // The US market lives at the root. Redirect any explicit /us or /us/* URL to
+  // its clean root equivalent so there is a single canonical US URL.
+  if (pathname === '/us' || pathname.startsWith('/us/')) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.slice(3) || '/';
+    return NextResponse.redirect(url, 308);
+  }
+
   const { country, region } = readGeo(request);
   const chain = detectMarketChain(country, region);
   const detectedMarket = rootMarketFromChain(chain);
 
-  const pathSegment = pathname.split('/')[1] ?? '';
-  const pathMarket = isSupportedMarket(pathSegment) ? pathSegment : null;
+  const isUk = pathname === '/uk' || pathname.startsWith('/uk/');
+  const isGo = pathname === '/go' || pathname.startsWith('/go/');
+  // Root paths represent the US (the default region); /uk/* represents the UK.
+  const pathMarket = isUk ? 'uk' : ROOT_MARKET;
 
   // Hard geo block: 404 a blocked review page before it renders.
   const reviewMatch = pathname.match(REVIEW_PATH);
   if (reviewMatch) {
-    const operatorSlug = decodeURIComponent(reviewMatch[2]);
+    const operatorSlug = decodeURIComponent(reviewMatch[1]);
     if (await isOperatorGeoBlockedViaRest(operatorSlug, chain)) {
       // Rewrite to a path with no route so Next serves not-found with a 404
       // status. A 404 (not 403) keeps the operator's existence private.
@@ -95,9 +110,7 @@ export async function proxy(request: NextRequest) {
   // one being viewed and the banner has not been dismissed.
   const dismissed = request.cookies.get(BANNER_DISMISS_COOKIE)?.value === '1';
   const suggestSwitch =
-    !dismissed && detectedMarket && pathMarket && detectedMarket !== pathMarket
-      ? detectedMarket
-      : null;
+    !dismissed && detectedMarket && detectedMarket !== pathMarket ? detectedMarket : null;
 
   // Forward the geo context to the app on request headers.
   const requestHeaders = new Headers(request.headers);
@@ -105,8 +118,16 @@ export async function proxy(request: NextRequest) {
   requestHeaders.set(GEO_HEADERS.region, region ?? '');
   requestHeaders.set(GEO_HEADERS.detectedMarket, detectedMarket ?? '');
   requestHeaders.set(GEO_HEADERS.geoCandidates, chain.join(','));
-  requestHeaders.set(GEO_HEADERS.pathMarket, pathMarket ?? '');
+  requestHeaders.set(GEO_HEADERS.pathMarket, pathMarket);
   requestHeaders.set(GEO_HEADERS.suggestSwitch, suggestSwitch ?? '');
+
+  // Root (US) app paths render the /us route tree internally while the browser
+  // keeps the clean, unprefixed URL. /uk and /go pass through unchanged.
+  if (!isUk && !isGo) {
+    const target = request.nextUrl.clone();
+    target.pathname = pathname === '/' ? '/us' : `/us${pathname}`;
+    return NextResponse.rewrite(target, { request: { headers: requestHeaders } });
+  }
 
   return NextResponse.next({ request: { headers: requestHeaders } });
 }

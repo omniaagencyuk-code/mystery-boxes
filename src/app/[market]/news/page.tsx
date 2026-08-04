@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { getPublishedPostsForMarket } from '@/lib/data/content';
 import { createServerSupabase } from '@/lib/supabase/server';
-import { isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
+import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { marketAlternates } from '@/lib/seo';
 
 type Params = { market: string };
@@ -40,8 +40,8 @@ export default async function NewsIndexPage({ params }: { params: Promise<Params
     <div className="space-y-8">
       <Breadcrumbs
         items={[
-          { name: MARKET_LABELS[marketCode], path: `/${marketCode}` },
-          { name: 'News', path: `/${marketCode}/news` },
+          { name: MARKET_LABELS[marketCode], path: marketPath(marketCode) },
+          { name: 'News', path: marketPath(marketCode, '/news') },
         ]}
       />
       <header className="space-y-2">
@@ -58,7 +58,7 @@ export default async function NewsIndexPage({ params }: { params: Promise<Params
             return (
               <Link
                 key={post.id}
-                href={`/${marketCode}/news/${post.slug}`}
+                href={marketPath(marketCode, `/news/${post.slug}`)}
                 className="u-glass group flex flex-col overflow-hidden rounded-xl"
               >
                 {cover ? (

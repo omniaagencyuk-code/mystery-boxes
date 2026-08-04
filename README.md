@@ -131,9 +131,14 @@ Compliance furniture is decided only by `operator_type`, in `src/lib/compliance.
 - `src/lib/` env, geo, compliance, SEO, Supabase clients, data access
 - `src/components/` operator card (full / compact / table_row), compliance,
   breadcrumbs, banner
-- `src/app/` routes: `/` chooser, `/[market]` home, `/[market]/reviews` (+
-  `/[operator]`), `/[market]/compare`, `/[market]/promo-codes`,
-  `/[market]/categories`, `/[market]/news` (+ `/[slug]`), `/[market]/[slug]`
-  (category or guide/money page), `/go/[slug]` affiliate redirect, `/admin`,
-  `sitemap`, `robots`. Reserved market sub-slugs: `reviews`, `news`, `compare`,
-  `promo-codes`, `categories`.
+- Routing: the **US is the default region at the root** (no prefix) and the
+  **UK lives under `/uk`**. The proxy rewrites root paths to the internal `/us`
+  route tree while keeping the clean URL, and 308-redirects any explicit `/us/*`
+  to its root equivalent. So `/reviews` = US reviews, `/uk/reviews` = UK reviews.
+  International visitors land on the US site at the root automatically (no
+  redirect). All URLs are built via `marketPath()` in `src/lib/geo.ts`.
+- Routes: `/` (US home), `/reviews` (+ `/[operator]`), `/compare`,
+  `/promo-codes`, `/categories`, `/news` (+ `/[slug]`), `/[slug]` (category or
+  guide/money page), each also under `/uk/...`; `/go/[slug]` affiliate redirect,
+  `/admin`, `sitemap`, `robots`. Reserved market sub-slugs: `reviews`, `news`,
+  `compare`, `promo-codes`, `categories`, `uk`, `us`.
