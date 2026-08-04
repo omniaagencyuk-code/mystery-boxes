@@ -41,28 +41,6 @@ const FEATURES = [
   { title: 'Kept current', sub: 'We update as offers change' },
 ];
 
-function HeroArt() {
-  return (
-    <svg viewBox="0 0 220 200" className="h-auto w-full max-w-xs" aria-hidden role="img">
-      <defs>
-        <linearGradient id="boxg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--grad-from)" />
-          <stop offset="1" stopColor="var(--grad-to)" />
-        </linearGradient>
-        <radialGradient id="glow" cx="50%" cy="40%" r="60%">
-          <stop offset="0" stopColor="var(--grad-from)" stopOpacity="0.55" />
-          <stop offset="1" stopColor="var(--grad-from)" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <circle cx="110" cy="90" r="90" fill="url(#glow)" />
-      <polygon points="110,40 175,72 110,104 45,72" fill="url(#boxg)" opacity="0.9" />
-      <polygon points="45,72 110,104 110,168 45,136" fill="url(#boxg)" opacity="0.6" />
-      <polygon points="175,72 110,104 110,168 175,136" fill="url(#boxg)" opacity="0.75" />
-      <text x="110" y="90" textAnchor="middle" fontSize="42" fontWeight="800" fill="#fff">?</text>
-    </svg>
-  );
-}
-
 export default async function MarketHomePage({
   params,
 }: {
@@ -116,21 +94,24 @@ export default async function MarketHomePage({
           </div>
         </div>
 
-        <div className="relative">
-          <div className="u-glass rounded-2xl p-6">
-            <div className="mb-4 flex items-center justify-center">
-              <HeroArt />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <StatTile value={operators.length} label="Platforms listed" />
-              <StatTile value={promo.length} label="Live offers" />
-              <StatTile value={categories.length} label="Categories" />
-              <StatTile value={SUPPORTED_MARKETS.length} label="Regions" />
-              <StatTile value="100%" label="Independent" />
-              <StatTile value="18+" label="Where it applies" />
-            </div>
-          </div>
+        <div className="flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hero-mystery-box.png"
+            alt="A mystery box surrounded by prizes"
+            className="w-full max-w-lg drop-shadow-2xl"
+          />
         </div>
+      </section>
+
+      {/* Stats strip */}
+      <section className="u-glass grid grid-cols-2 gap-3 rounded-2xl p-4 sm:grid-cols-3 lg:grid-cols-6">
+        <StatTile value={operators.length} label="Platforms listed" />
+        <StatTile value={promo.length} label="Live offers" />
+        <StatTile value={categories.length} label="Categories" />
+        <StatTile value={SUPPORTED_MARKETS.length} label="Regions" />
+        <StatTile value="100%" label="Independent" />
+        <StatTile value="18+" label="Where it applies" />
       </section>
 
       {/* Feature band */}
