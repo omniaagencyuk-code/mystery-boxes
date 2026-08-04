@@ -4,21 +4,40 @@ import { deleteMedia, uploadMedia } from './actions';
 import { DeleteButton, EmptyState, Field, inputCls, PageHeader } from '@/components/admin/ui';
 import { adminPageClient } from '@/lib/admin/db';
 
-export default async function MediaListPage() {
+export default async function MediaListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const db = await adminPageClient();
   if (!db) return null;
 
+  const { error } = await searchParams;
   const { data: media } = await db.from('media').select('*').order('created_at', { ascending: false });
 
   return (
     <div className="space-y-6">
       <PageHeader title="Media" />
 
+      {error && (
+        <p className="rounded-lg border border-danger/40 bg-danger/10 px-4 py-2 text-sm text-danger">
+          {error}
+        </p>
+      )}
+
       <form action={uploadMedia} className="space-y-3 u-glass rounded-lg p-4">
         <h2 className="text-sm font-semibold">Upload</h2>
+        <p className="text-xs text-muted">PNG, JPEG, WebP, GIF or AVIF. Maximum 5 MB.</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="File" htmlFor="file">
-            <input id="file" name="file" type="file" required className={inputCls} />
+            <input
+              id="file"
+              name="file"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+              required
+              className={inputCls}
+            />
           </Field>
           <Field label="Title" htmlFor="title">
             <input id="title" name="title" className={inputCls} />

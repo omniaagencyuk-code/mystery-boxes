@@ -8,21 +8,45 @@ import { str, strOrNull } from '@/lib/admin/form';
 
 const BUCKET = 'media';
 
+// Allowlist of accepted image types mapped to a safe, fixed extension. SVG is
+// intentionally excluded because it can carry scripts. The extension comes from
+// this map, never from the uploaded filename, so a crafted filename cannot
+// influence the stored object key.
+const ALLOWED_TYPES = new Map<string, string>([
+  ['image/png', 'png'],
+  ['image/jpeg', 'jpg'],
+  ['image/webp', 'webp'],
+  ['image/gif', 'gif'],
+  ['image/avif', 'avif'],
+]);
+const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+
+function uploadError(message: string): never {
+  redirect(`/admin/media?error=${encodeURIComponent(message)}`);
+}
+
 export async function uploadMedia(formData: FormData) {
   const db = await adminDb();
   const file = formData.get('file');
   if (!(file instanceof File) || file.size === 0) {
-    redirect('/admin/media');
+    uploadError('Choose a file to upload.');
   }
 
-  const dot = file.name.lastIndexOf('.');
-  const ext = dot >= 0 ? file.name.slice(dot) : '';
-  const path = `${crypto.randomUUID()}${ext}`;
+  if (file.size > MAX_BYTES) {
+    uploadError('File is too large. The maximum is 5 MB.');
+  }
 
-  const { error: uploadError } = await db.storage
+  const ext = ALLOWED_TYPES.get(file.type);
+  if (!ext) {
+    uploadError('Unsupported file type. Upload a PNG, JPEG, WebP, GIF or AVIF image.');
+  }
+
+  const path = `${crypto.randomUUID()}.${ext}`;
+
+  const { error: storageError } = await db.storage
     .from(BUCKET)
-    .upload(path, file, { contentType: file.type || undefined, upsert: false });
-  if (uploadError) throw new Error(uploadError.message);
+    .upload(path, file, { contentType: file.type, upsert: false });
+  if (storageError) uploadError(storageError.message);
 
   const { data: pub } = db.storage.from(BUCKET).getPublicUrl(path);
 
