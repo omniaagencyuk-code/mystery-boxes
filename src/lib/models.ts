@@ -7,6 +7,8 @@ import type { OperatorTypeSlug } from '@/lib/supabase/types';
  * shape here means components never touch raw database rows.
  */
 export interface OperatorSummary {
+  /** Database id, used for category and relation lookups. */
+  id: string;
   slug: string;
   name: string;
   logoUrl: string | null;
