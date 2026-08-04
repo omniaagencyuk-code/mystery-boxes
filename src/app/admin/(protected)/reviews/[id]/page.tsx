@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { saveReview } from '../actions';
+import { MarkdownEditor } from '@/components/admin/markdown-editor';
 import { Field, inputCls, MarketSelect, PageHeader, StatusSelect, SubmitRow } from '@/components/admin/ui';
 import { adminPageClient } from '@/lib/admin/db';
 
@@ -14,10 +15,14 @@ export default async function ReviewFormPage({
   if (!db) return null;
 
   const isNew = id === 'new';
-  const [{ data: operators }, { data: markets }] = await Promise.all([
+  const [{ data: operators }, { data: markets }, { data: media }] = await Promise.all([
     db.from('operators').select('id, name').order('name'),
     db.from('markets').select('id, code, name').order('code'),
+    db.from('media').select('title, path, url, mime_type').order('created_at', { ascending: false }),
   ]);
+  const imageMedia = (media ?? [])
+    .filter((m) => m.mime_type?.startsWith('image/') && m.url)
+    .map((m) => ({ url: m.url as string, title: m.title || m.path }));
 
   let review = null;
   if (!isNew) {
@@ -60,8 +65,10 @@ export default async function ReviewFormPage({
           <input id="verdict" name="verdict" defaultValue={review?.verdict ?? ''} className={inputCls} />
         </Field>
 
-        <Field label="Body" htmlFor="body" hint="Markdown. Separate paragraphs with a blank line.">
-          <textarea id="body" name="body" rows={14} defaultValue={review?.body ?? ''} className={`${inputCls} font-mono`} />
+        <Field label="Body" hint="Use the toolbar for headings, links, tables and images. Preview shows the published look.">
+          <div className="mt-1">
+            <MarkdownEditor name="body" defaultValue={review?.body ?? ''} rows={16} media={imageMedia} />
+          </div>
         </Field>
 
         <Field label="Status">
