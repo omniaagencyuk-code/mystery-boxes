@@ -1,9 +1,11 @@
 import { cache } from 'react';
 
 import { getMarketByCode } from '@/lib/data/markets';
+import { getVisibleOperatorsForMarket } from '@/lib/data/operators';
 import type { MarketCode } from '@/lib/geo';
+import type { OperatorSummary } from '@/lib/models';
 import { createServerSupabase } from '@/lib/supabase/server';
-import type { CategoryRow, OfferRow, PageRow, ReviewRow } from '@/lib/supabase/types';
+import type { CategoryRow, OfferRow, PageRow, PostRow, ReviewRow } from '@/lib/supabase/types';
 
 /** Published review for an operator in a market (RLS also enforces published). */
 export const getPublishedReview = cache(
@@ -68,6 +70,79 @@ export const getCategoriesForMarket = cache(
       .or(`market_id.eq.${market.id},market_id.is.null`)
       .order('name', { ascending: true });
     return data ?? [];
+  },
+);
+
+/** Published posts (news / blog) for a market, newest first. */
+export const getPublishedPostsForMarket = cache(
+  async (marketCode: MarketCode): Promise<PostRow[]> => {
+    const market = await getMarketByCode(marketCode);
+    if (!market) return [];
+
+    const supabase = await createServerSupabase();
+    const { data } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('market_id', market.id)
+      .eq('status', 'published')
+      .order('published_at', { ascending: false });
+    return data ?? [];
+  },
+);
+
+/** A single published post for a market. */
+export const getPostForMarket = cache(
+  async (marketCode: MarketCode, slug: string): Promise<PostRow | null> => {
+    const market = await getMarketByCode(marketCode);
+    if (!market) return null;
+
+    const supabase = await createServerSupabase();
+    const { data } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('market_id', market.id)
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .maybeSingle();
+    return data ?? null;
+  },
+);
+
+/**
+ * Active offers across every operator that is visible and not geo-blocked in the
+ * market, paired with the operator, for the promo codes page. Respects the
+ * offer's live window.
+ */
+export const getMarketPromoOffers = cache(
+  async (
+    marketCode: MarketCode,
+    geoChain: readonly string[],
+  ): Promise<{ operator: OperatorSummary; offer: OfferRow }[]> => {
+    const operators = await getVisibleOperatorsForMarket(marketCode, geoChain);
+    if (operators.length === 0) return [];
+
+    const byId = new Map(operators.map((o) => [o.id, o]));
+    const nowIso = new Date().toISOString();
+
+    const supabase = await createServerSupabase();
+    const { data } = await supabase
+      .from('offers')
+      .select('*')
+      .in(
+        'operator_id',
+        operators.map((o) => o.id),
+      )
+      .eq('active', true)
+      .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+      .or(`expires_at.is.null,expires_at.gte.${nowIso}`)
+      .order('title');
+
+    const results: { operator: OperatorSummary; offer: OfferRow }[] = [];
+    for (const offer of data ?? []) {
+      const operator = byId.get(offer.operator_id);
+      if (operator) results.push({ operator, offer });
+    }
+    return results;
   },
 );
 

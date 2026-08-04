@@ -28,7 +28,24 @@ export async function getSitemapEntriesForMarket(
     .maybeSingle();
   if (!marketRow) return [];
 
-  const entries: SitemapEntry[] = [{ path: `/${market}` }];
+  const entries: SitemapEntry[] = [
+    { path: `/${market}` },
+    { path: `/${market}/reviews` },
+    { path: `/${market}/compare` },
+    { path: `/${market}/promo-codes` },
+    { path: `/${market}/categories` },
+    { path: `/${market}/news` },
+  ];
+
+  // Published posts (news) for this market.
+  const { data: posts } = await supabase
+    .from('posts')
+    .select('slug, updated_at')
+    .eq('market_id', marketRow.id)
+    .eq('status', 'published');
+  for (const post of posts ?? []) {
+    entries.push({ path: `/${market}/news/${post.slug}`, lastModified: post.updated_at });
+  }
 
   // Categories available in this market (market-scoped or global).
   const { data: categories } = await supabase

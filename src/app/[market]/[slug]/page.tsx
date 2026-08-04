@@ -17,10 +17,16 @@ type Params = { market: string; slug: string };
  * Categories are resolved first, then pages. The `reviews` segment is a separate
  * static route, so it never reaches here.
  */
+// Static sections own these URLs, so a category or page must never resolve here
+// under the same slug.
+const RESERVED = new Set(['reviews', 'news', 'compare', 'promo-codes', 'categories']);
+
 async function resolve(
   market: MarketCode,
   slug: string,
 ): Promise<{ kind: 'category'; category: CategoryRow } | { kind: 'page'; page: PageRow } | null> {
+  if (RESERVED.has(slug)) return null;
+
   const category = await getCategoryForMarket(market, slug);
   if (category) return { kind: 'category', category };
 
