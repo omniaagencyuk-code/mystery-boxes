@@ -2,10 +2,38 @@ import type { MarketCode } from '@/lib/geo';
 import type { OperatorTypeSlug } from '@/lib/supabase/types';
 
 /**
+ * A responsible-gambling resource shown for digital unboxing operators. Which
+ * resources apply is market-configurable below.
+ */
+export interface ResponsibleGamblingResource {
+  label: string;
+  href: string;
+}
+
+/**
+ * Responsible-gambling resources per market, shown for digital_unboxing
+ * operators only. This is the single place to add or change them: when the
+ * correct US reference is confirmed, add it here and nothing else changes.
+ *
+ * We deliberately invent nothing. BeGambleAware and GamStop are UK bodies, so
+ * they live under `uk`. The `us` list is intentionally empty until a real US
+ * responsible-gambling reference is confirmed.
+ */
+export const RESPONSIBLE_GAMBLING_RESOURCES: Record<MarketCode, ResponsibleGamblingResource[]> = {
+  uk: [
+    { label: 'BeGambleAware', href: 'https://www.begambleaware.org' },
+    { label: 'GamStop', href: 'https://www.gamstop.co.uk' },
+  ],
+  // TODO confirm the US responsible-gambling reference, then add it here. Left
+  // empty on purpose so nothing is fabricated for the US market.
+  us: [],
+};
+
+/**
  * Which compliance elements an operator requires, decided ONLY by operator_type
- * (and market for the UK-specific GamStop reference). This is the single source
- * of truth so that no global layout can apply gambling messaging to a physical
- * retail operator.
+ * (and market, for which responsible-gambling resources apply). This is the
+ * single source of truth so that no global layout can apply gambling messaging
+ * to a physical retail operator.
  *
  *   digital_unboxing = pay to open on screen with a randomised result. Gambling
  *                      compliance furniture applies.
@@ -17,12 +45,10 @@ export interface ComplianceFurniture {
   affiliateDisclosure: boolean;
   /** 18+ marker. */
   ageRestriction: boolean;
-  /** BeGambleAware reference with link. */
-  beGambleAware: boolean;
-  /** GamStop reference. UK pages only. */
-  gamStop: boolean;
   /** Show licence authority and number when present. */
   licence: boolean;
+  /** Responsible-gambling resources to link, resolved for the market. */
+  responsibleGambling: ResponsibleGamblingResource[];
 }
 
 export function complianceFor(
@@ -33,15 +59,8 @@ export function complianceFor(
     return {
       affiliateDisclosure: true,
       ageRestriction: true,
-      beGambleAware: true,
-      // GamStop is a UK self-exclusion scheme, so it is UK pages only.
-      gamStop: market === 'uk',
       licence: true,
-      // NOTE for US digital pages: BeGambleAware and GamStop are UK bodies.
-      // GamStop is already suppressed outside the UK above. BeGambleAware is
-      // still shown per the spec's literal list. A US-specific responsible
-      // gambling resource is deliberately NOT invented here. Confirm the US
-      // responsible gambling reference before launching US digital operators.
+      responsibleGambling: RESPONSIBLE_GAMBLING_RESOURCES[market] ?? [],
     };
   }
 
@@ -49,14 +68,7 @@ export function complianceFor(
   return {
     affiliateDisclosure: true,
     ageRestriction: false,
-    beGambleAware: false,
-    gamStop: false,
     licence: false,
+    responsibleGambling: [],
   };
 }
-
-/** Public responsible-gambling resources referenced by the compliance furniture. */
-export const RESPONSIBLE_GAMBLING_LINKS = {
-  beGambleAware: 'https://www.begambleaware.org',
-  gamStop: 'https://www.gamstop.co.uk',
-} as const;

@@ -1,9 +1,5 @@
 import type { MarketCode } from '@/lib/geo';
-import {
-  complianceFor,
-  RESPONSIBLE_GAMBLING_LINKS,
-  type ComplianceFurniture,
-} from '@/lib/compliance';
+import { complianceFor, type ComplianceFurniture } from '@/lib/compliance';
 import type { OperatorTypeSlug } from '@/lib/supabase/types';
 
 interface ComplianceProps {
@@ -57,27 +53,17 @@ export function OperatorCompliance({
         </span>
       )}
 
-      {furniture.beGambleAware && (
+      {furniture.responsibleGambling.map((resource) => (
         <a
-          href={RESPONSIBLE_GAMBLING_LINKS.beGambleAware}
+          key={resource.href}
+          href={resource.href}
           target="_blank"
           rel="noopener noreferrer"
           className="underline underline-offset-2 hover:no-underline"
         >
-          BeGambleAware
+          {resource.label}
         </a>
-      )}
-
-      {furniture.gamStop && (
-        <a
-          href={RESPONSIBLE_GAMBLING_LINKS.gamStop}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline underline-offset-2 hover:no-underline"
-        >
-          GamStop
-        </a>
-      )}
+      ))}
     </div>
   );
 }
