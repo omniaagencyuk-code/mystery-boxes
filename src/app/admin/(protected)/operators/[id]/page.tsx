@@ -16,11 +16,16 @@ export default async function OperatorFormPage({
   if (!db) return null;
 
   const isNew = id === 'new';
-  const [{ data: types }, { data: markets }, { data: categories }] = await Promise.all([
+  const [{ data: types }, { data: markets }, { data: categories }, { data: media }] = await Promise.all([
     db.from('operator_types').select('id, name, slug').order('name'),
     db.from('markets').select('id, code, name').order('code'),
     db.from('categories').select('id, name, market_id').order('name'),
+    db
+      .from('media')
+      .select('id, title, path, url, mime_type')
+      .order('created_at', { ascending: false }),
   ]);
+  const imageMedia = (media ?? []).filter((m) => m.mime_type?.startsWith('image/') && m.url);
 
   let operator = null;
   const mapping = new Map<string, { visible: boolean; requires_geo_block: boolean }>();
@@ -74,9 +79,31 @@ export default async function OperatorFormPage({
           </Field>
         </div>
 
-        <Field label="Logo URL" htmlFor="logo_url" hint="Paste a URL, or upload in Media and paste it here.">
-          <input id="logo_url" name="logo_url" defaultValue={operator?.logo_url ?? ''} className={inputCls} />
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-start">
+          {operator?.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={operator.logo_url}
+              alt=""
+              className="h-16 w-16 rounded-lg border border-line object-contain"
+            />
+          )}
+          <div className="space-y-4">
+            <Field label="Logo from media" htmlFor="logo_media_id" hint="Upload brand logos in Media, then pick one here. This overrides the URL below.">
+              <select id="logo_media_id" name="logo_media_id" defaultValue="" className={inputCls}>
+                <option value="">Keep current / use URL below</option>
+                {imageMedia.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.title || m.path}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Logo URL" htmlFor="logo_url" hint="Or paste a logo URL directly.">
+              <input id="logo_url" name="logo_url" defaultValue={operator?.logo_url ?? ''} className={inputCls} />
+            </Field>
+          </div>
+        </div>
 
         <Field label="Tracking URL" htmlFor="tracking_url" hint="Outbound affiliate link. Rendered rel=sponsored nofollow.">
           <input id="tracking_url" name="tracking_url" defaultValue={operator?.tracking_url ?? ''} className={inputCls} />

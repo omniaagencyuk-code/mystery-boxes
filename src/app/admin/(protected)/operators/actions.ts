@@ -11,10 +11,19 @@ export async function saveOperator(formData: FormData) {
   const id = str(formData, 'id');
   const name = str(formData, 'name').trim();
 
+  // Logo: a picked media item wins over a pasted URL. We store the resolved URL
+  // on the operator so rendering needs no extra lookup.
+  let logoUrl = strOrNull(formData, 'logo_url');
+  const logoMediaId = strOrNull(formData, 'logo_media_id');
+  if (logoMediaId) {
+    const { data: media } = await db.from('media').select('url').eq('id', logoMediaId).maybeSingle();
+    if (media?.url) logoUrl = media.url;
+  }
+
   const values = {
     slug: str(formData, 'slug').trim() || slugify(name),
     name,
-    logo_url: strOrNull(formData, 'logo_url'),
+    logo_url: logoUrl,
     operator_type_id: str(formData, 'operator_type_id'),
     rating: numOrNull(formData, 'rating'),
     tracking_url: strOrNull(formData, 'tracking_url'),
