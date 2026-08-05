@@ -268,7 +268,8 @@ export default async function OperatorFormPage({
             addLabel="Add payment method"
             initial={paymentMethods}
             newItem={{ name: '', slug: '', kind: 'both' }}
-            itemLabel={(it) => (typeof it.name === 'string' && it.name ? it.name : 'New method')}
+            labelKey="name"
+            labelFallback="New method"
             fields={[
               { key: 'name', label: 'Name', type: 'text', placeholder: 'Visa' },
               { key: 'slug', label: 'Slug hint', type: 'text', placeholder: 'visa' },

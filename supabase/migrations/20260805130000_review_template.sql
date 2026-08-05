@@ -94,6 +94,7 @@ create table if not exists public.review_blocks (
 );
 create index if not exists review_blocks_review_id_idx on public.review_blocks (review_id);
 
+drop trigger if exists review_blocks_set_updated_at on public.review_blocks;
 create trigger review_blocks_set_updated_at
   before update on public.review_blocks
   for each row execute function public.set_updated_at();
@@ -142,6 +143,7 @@ create index if not exists affiliate_clicks_link_slug_idx on public.affiliate_cl
 -- ---------------------------------------------------------------------------
 
 alter table public.review_ratings enable row level security;
+drop policy if exists review_ratings_public_read on public.review_ratings;
 create policy review_ratings_public_read on public.review_ratings
   for select to anon, authenticated
   using (exists (select 1 from public.reviews r
@@ -150,6 +152,7 @@ grant select on public.review_ratings to anon, authenticated;
 grant all on public.review_ratings to service_role;
 
 alter table public.review_faqs enable row level security;
+drop policy if exists review_faqs_public_read on public.review_faqs;
 create policy review_faqs_public_read on public.review_faqs
   for select to anon, authenticated
   using (exists (select 1 from public.reviews r
@@ -158,6 +161,7 @@ grant select on public.review_faqs to anon, authenticated;
 grant all on public.review_faqs to service_role;
 
 alter table public.review_blocks enable row level security;
+drop policy if exists review_blocks_public_read on public.review_blocks;
 create policy review_blocks_public_read on public.review_blocks
   for select to anon, authenticated
   using (visible = true and exists (select 1 from public.reviews r
@@ -166,6 +170,7 @@ grant select on public.review_blocks to anon, authenticated;
 grant all on public.review_blocks to service_role;
 
 alter table public.operator_payment_methods enable row level security;
+drop policy if exists operator_payment_methods_public_read on public.operator_payment_methods;
 create policy operator_payment_methods_public_read on public.operator_payment_methods
   for select to anon, authenticated
   using (exists (select 1 from public.operators o
@@ -174,6 +179,7 @@ grant select on public.operator_payment_methods to anon, authenticated;
 grant all on public.operator_payment_methods to service_role;
 
 alter table public.operator_related enable row level security;
+drop policy if exists operator_related_public_read on public.operator_related;
 create policy operator_related_public_read on public.operator_related
   for select to anon, authenticated
   using (exists (select 1 from public.operators o

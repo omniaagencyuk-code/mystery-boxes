@@ -23,6 +23,18 @@ export interface RepeaterField {
 
 export type RepeaterItem = Record<string, string | boolean>;
 
+/** Row heading from a chosen key's value, with a fallback. */
+function rowLabel(
+  item: RepeaterItem,
+  index: number,
+  labelKey?: string,
+  labelFallback?: string,
+): string {
+  const raw = labelKey ? item[labelKey] : undefined;
+  if (typeof raw === 'string' && raw.trim()) return raw;
+  return labelFallback ?? `Row ${index + 1}`;
+}
+
 /**
  * A client-managed array editor. It keeps an array of plain objects in React
  * state and mirrors the whole array into a single hidden <input> as JSON on
@@ -36,14 +48,21 @@ export function Repeater({
   initial = [],
   newItem,
   addLabel = 'Add row',
-  itemLabel,
+  labelKey,
+  labelFallback,
 }: {
   name: string;
   fields: RepeaterField[];
   initial?: RepeaterItem[];
   newItem: RepeaterItem;
   addLabel?: string;
-  itemLabel?: (item: RepeaterItem, index: number) => string;
+  /**
+   * Key whose value is shown as each row's heading. A plain string (not a
+   * function) so this component can be used from a server component, where
+   * function props are not allowed across the client boundary.
+   */
+  labelKey?: string;
+  labelFallback?: string;
 }) {
   const [items, setItems] = useState<RepeaterItem[]>(() => initial.map((it) => ({ ...it })));
 
@@ -86,7 +105,7 @@ export function Repeater({
         <div key={index} className="rounded-lg border border-line bg-elevated p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-muted">
-              {itemLabel ? itemLabel(item, index) : `Row ${index + 1}`}
+              {rowLabel(item, index, labelKey, labelFallback)}
             </span>
             <div className="flex items-center gap-1">
               <button

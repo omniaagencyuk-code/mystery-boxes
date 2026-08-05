@@ -182,7 +182,8 @@ export default async function ReviewFormPage({
             addLabel="Add rating"
             initial={ratings}
             newItem={{ label: '', score: '' }}
-            itemLabel={(it) => (typeof it.label === 'string' && it.label ? it.label : 'New rating')}
+            labelKey="label"
+            labelFallback="New rating"
             fields={[
               { key: 'label', label: 'Label', type: 'text', placeholder: 'Value for money' },
               { key: 'score', label: 'Score', type: 'number', min: 0, max: 5, step: 0.1 },
@@ -197,7 +198,8 @@ export default async function ReviewFormPage({
             addLabel="Add FAQ"
             initial={faqs}
             newItem={{ question: '', answer: '' }}
-            itemLabel={(it) => (typeof it.question === 'string' && it.question ? it.question : 'New FAQ')}
+            labelKey="question"
+            labelFallback="New FAQ"
             fields={[
               { key: 'question', label: 'Question', type: 'text', full: true },
               { key: 'answer', label: 'Answer', type: 'textarea', full: true, rows: 3 },
@@ -227,9 +229,8 @@ export default async function ReviewFormPage({
               config: '',
               visible: true,
             }}
-            itemLabel={(it) =>
-              typeof it.block_type === 'string' ? it.block_type : 'Block'
-            }
+            labelKey="block_type"
+            labelFallback="Block"
             fields={[
               {
                 key: 'block_type',
