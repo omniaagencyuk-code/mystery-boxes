@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import heroImage from '../../../public/hero-mystery-box.png';
-import { OperatorCard } from '@/components/operator-card';
+import { PlatformRankingCard } from '@/components/platform-ranking-card';
+import { CheckIcon, ShieldIcon, ClockIcon, GlobeIcon } from '@/components/review/icons';
 import { getCategoriesForMarket, getMarketPromoOffers } from '@/lib/data/content';
 import { getVisibleOperatorsForMarket } from '@/lib/data/operators';
-import { marketPath, isSupportedMarket, MARKET_LABELS, SUPPORTED_MARKETS, type MarketCode } from '@/lib/geo';
+import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { getRequestGeoContext } from '@/lib/request-context';
 import { marketAlternates } from '@/lib/seo';
 
@@ -27,21 +28,32 @@ export async function generateMetadata({
   };
 }
 
-function StatTile({ value, label }: { value: string | number; label: string }) {
+const FEATURES = [
+  { title: 'Independent reviews', sub: 'Unbiased and data driven', icon: ShieldIcon },
+  { title: 'Verified offers', sub: 'Checked and kept current', icon: CheckIcon },
+  { title: 'Transparent scoring', sub: 'Our rating system shows the full picture', icon: GlobeIcon },
+  { title: 'Safe and responsible', sub: 'We promote safe play', icon: ClockIcon },
+];
+
+function TrustItem({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-line bg-surface/40 p-3">
-      <div className="text-2xl font-extrabold text-ink">{value}</div>
+    <span className="inline-flex items-center gap-1.5 text-sm text-muted">
+      <span className="text-success">
+        <CheckIcon width={15} height={15} />
+      </span>
+      {children}
+    </span>
+  );
+}
+
+function HeroStat({ value, label }: { value: string | number; label: string }) {
+  return (
+    <div>
+      <div className="text-2xl font-extrabold text-ink sm:text-3xl">{value}</div>
       <div className="text-xs text-muted">{label}</div>
     </div>
   );
 }
-
-const FEATURES = [
-  { title: 'Independent reviews', sub: 'We are not owned by any operator' },
-  { title: 'Compliance shown', sub: '18+ and licence info where it applies' },
-  { title: 'Region aware', sub: 'Separate UK and US listings' },
-  { title: 'Kept current', sub: 'We update as offers change' },
-];
 
 export default async function MarketHomePage({
   params,
@@ -59,40 +71,55 @@ export default async function MarketHomePage({
     getMarketPromoOffers(marketCode, geoChain),
   ]);
 
+  // Real per-operator headline offer from the DB, for the ranking cards.
+  const offerTitleByOperator = new Map<string, string>();
+  for (const { operator, offer } of promo) {
+    if (!offerTitleByOperator.has(operator.id)) offerTitleByOperator.set(operator.id, offer.title);
+  }
+
   const topRated = operators.slice(0, 5);
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-14">
       {/* Hero */}
       <section className="grid items-center gap-10 lg:grid-cols-2">
         <div className="space-y-6">
-          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/50 px-3 py-1 text-xs font-semibold text-muted">
-            Independent and ad supported
-          </span>
-          <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
+          <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-ink sm:text-5xl">
             Find the best{' '}
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              mystery box
-            </span>{' '}
-            websites
+              mystery box websites
+            </span>
           </h1>
           <p className="max-w-xl text-lg text-muted">
-            We compare mystery box operators available in the {MARKET_LABELS[marketCode]}, read the
-            small print, and show the compliance details so you can decide before you spend anything.
+            Independent reviews, verified offers and real data to help you compare mystery box
+            platforms available in the {MARKET_LABELS[marketCode]} before you spend anything.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
-              href={marketPath(marketCode, '/compare')}
-              className="u-btn-primary rounded-lg px-5 py-3 text-sm font-bold"
-            >
-              Compare platforms
-            </Link>
-            <Link
               href={marketPath(marketCode, '/reviews')}
-              className="rounded-lg border border-line px-5 py-3 text-sm font-bold text-ink hover:bg-elevated"
+              className="u-btn-primary rounded-lg px-5 py-3 text-sm font-bold"
             >
               Browse reviews
             </Link>
+            <Link
+              href={marketPath(marketCode, '/compare')}
+              className="rounded-lg border border-line px-5 py-3 text-sm font-bold text-ink hover:bg-elevated"
+            >
+              Compare sites
+            </Link>
+          </div>
+
+          {/* Real database-driven statistics */}
+          <div className="flex flex-wrap gap-x-10 gap-y-4 pt-2">
+            <HeroStat value={operators.length} label="Platforms reviewed" />
+            <HeroStat value={categories.length} label="Categories" />
+            <HeroStat value={promo.length} label="Verified offers" />
+          </div>
+
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <TrustItem>Independent</TrustItem>
+            <TrustItem>Verified offers</TrustItem>
+            <TrustItem>Updated regularly</TrustItem>
           </div>
         </div>
 
@@ -107,72 +134,71 @@ export default async function MarketHomePage({
         </div>
       </section>
 
-      {/* Stats strip */}
-      <section className="u-glass grid grid-cols-2 gap-3 rounded-2xl p-4 sm:grid-cols-3 lg:grid-cols-6">
-        <StatTile value={operators.length} label="Platforms listed" />
-        <StatTile value={promo.length} label="Live offers" />
-        <StatTile value={categories.length} label="Categories" />
-        <StatTile value={SUPPORTED_MARKETS.length} label="Regions" />
-        <StatTile value="100%" label="Independent" />
-        <StatTile value="18+" label="Where it applies" />
-      </section>
-
-      {/* Feature band */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {FEATURES.map((f) => (
-          <div key={f.title} className="u-glass flex items-start gap-3 rounded-xl p-4">
-            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-gradient-to-br from-primary to-accent" />
-            <div>
-              <div className="font-bold text-ink">{f.title}</div>
-              <div className="text-sm text-muted">{f.sub}</div>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      {/* Category chips */}
-      {categories.length > 0 && (
-        <nav aria-label="Categories" className="flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              href={marketPath(marketCode, `/${cat.slug}`)}
-              className="rounded-full border border-line px-4 py-1.5 text-sm text-muted hover:bg-elevated hover:text-ink"
-            >
-              {cat.name}
-            </Link>
-          ))}
-        </nav>
-      )}
-
       {/* Top rated */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-ink">Top rated mystery box sites</h2>
+          <h2 className="text-2xl font-bold text-ink">Top rated mystery box websites</h2>
           <Link
-            href={marketPath(marketCode, '/compare')}
+            href={marketPath(marketCode, '/reviews')}
             className="text-sm font-semibold text-accent hover:underline"
           >
-            Compare all
+            View all
           </Link>
         </div>
 
         {topRated.length === 0 ? (
           <p className="text-muted">We have nothing to show here for your region right now.</p>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {topRated.map((op, i) => (
-              <OperatorCard
+              <PlatformRankingCard
                 key={op.id}
                 operator={op}
-                market={marketCode}
-                variant="full"
                 rank={i + 1}
+                market={marketCode}
+                offerTitle={offerTitleByOperator.get(op.id) ?? null}
+                showCompare
               />
             ))}
           </div>
         )}
       </section>
+
+      {/* Feature strip */}
+      <section className="grid gap-4 rounded-2xl border border-line bg-surface/40 p-5 sm:grid-cols-2 lg:grid-cols-4">
+        {FEATURES.map((f) => {
+          const Icon = f.icon;
+          return (
+            <div key={f.title} className="flex items-start gap-3">
+              <span className="mt-0.5 shrink-0 text-primary">
+                <Icon width={20} height={20} />
+              </span>
+              <div>
+                <div className="font-bold text-ink">{f.title}</div>
+                <div className="text-sm text-muted">{f.sub}</div>
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
+      {/* Category chips */}
+      {categories.length > 0 && (
+        <section className="space-y-4">
+          <h2 className="text-xl font-bold text-ink">Browse by category</h2>
+          <nav aria-label="Categories" className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                href={marketPath(marketCode, `/${cat.slug}`)}
+                className="rounded-full border border-line bg-surface/50 px-4 py-1.5 text-sm text-muted hover:border-primary/40 hover:text-ink"
+              >
+                {cat.name}
+              </Link>
+            ))}
+          </nav>
+        </section>
+      )}
     </div>
   );
 }
