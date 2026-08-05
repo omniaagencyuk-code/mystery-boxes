@@ -1,24 +1,27 @@
 -- ---------------------------------------------------------------------------
 -- LOOTIE REVIEW  (run once in the Supabase SQL Editor)
 --
--- Creates / updates everything the review template needs so /reviews/lootie
--- renders in the new layout:
---   1. The Lootie operator (digital unboxing) with rating, summary, pros, cons.
---   2. Its mapping to the US (root) market so the review page exists there.
---   3. A "free box for new accounts" offer for the top banner.
---   4. The published review body (markdown) and one line verdict.
+-- Populates everything the dynamic review template needs so /reviews/lootie
+-- renders with its hero, quick facts, payment methods, welcome offer, pros and
+-- cons, the full editorial body and structured FAQs.
 --
--- The content is supplied by the site owner. No affiliate tracking URL is set,
--- so the banner CTA button stays hidden until you add one in
--- Admin > Operators > Lootie > Tracking URL. Lootie holds no gambling licence,
--- so the licence fields are intentionally left empty.
+-- Every value here comes from the review the site owner supplied. Nothing is
+-- invented: Lootie is unlicensed so licence fields stay empty, no founded year
+-- or minimum age is stated in the source so those are left blank, and no rating
+-- breakdown is added because the source gives only the single overall score.
+-- No affiliate tracking URL is set, so the CTA button stays hidden until one is
+-- added in Admin > Operators > Lootie.
 --
--- Idempotent: safe to re-run. Re-running overwrites the operator core fields and
--- the review body with what is below, so make later edits in the admin, not here.
+-- Idempotent: safe to re-run. Re-running overwrites the operator, review and
+-- child rows with what is below, so make later edits in the admin, not here.
+-- Run AFTER the review-template migration (20260805130000_review_template.sql).
 -- ---------------------------------------------------------------------------
 
 -- 1. Operator -----------------------------------------------------------------
-insert into public.operators (slug, name, operator_type_id, rating, summary, pros, cons, active)
+insert into public.operators (
+  slug, name, operator_type_id, rating, summary, pros, cons, active,
+  owner, availability, buyback, shipping_info, support_info
+)
 select
   'lootie',
   'Lootie',
@@ -41,7 +44,12 @@ select
     "Email support can be slow or unresponsive on high value orders",
     "Unlicensed, so there is no regulator to appeal to if something goes wrong"
   ]$j$::jsonb,
-  true
+  true,
+  'Lootie Limited (Dublin, Ireland)',
+  'Worldwide',
+  'Site credit only, no cash out',
+  'Worldwide, no PO boxes',
+  'Live chat (fast) and email (slower)'
 from public.operator_types t
 where t.slug = 'digital_unboxing'
 on conflict (slug) do update set
@@ -52,6 +60,11 @@ on conflict (slug) do update set
   pros             = excluded.pros,
   cons             = excluded.cons,
   active           = true,
+  owner            = excluded.owner,
+  availability     = excluded.availability,
+  buyback          = excluded.buyback,
+  shipping_info    = excluded.shipping_info,
+  support_info     = excluded.support_info,
   updated_at       = now();
 
 -- 2. Show it in the US (root) market ------------------------------------------
@@ -63,7 +76,22 @@ on conflict (operator_id, market_id) do update set
   visible            = true,
   requires_geo_block = false;
 
--- 3. Welcome offer for the banner ---------------------------------------------
+-- 3. Payment methods (from the review: deposit methods only, no cash out) ------
+delete from public.operator_payment_methods
+  where operator_id in (select id from public.operators where slug = 'lootie');
+insert into public.operator_payment_methods (operator_id, slug, name, kind, position)
+select o.id, v.slug, v.name, 'deposit', v.position
+from public.operators o,
+  (values
+    ('visa', 'Visa', 0),
+    ('mastercard', 'Mastercard', 1),
+    ('paypal', 'PayPal', 2),
+    ('crypto', 'Crypto (via Coinbase)', 3),
+    ('steam', 'Steam', 4)
+  ) as v(slug, name, position)
+where o.slug = 'lootie';
+
+-- 4. Welcome offer for the banner ---------------------------------------------
 insert into public.offers (operator_id, title, description, active)
 select o.id,
   'Free box for new accounts',
@@ -76,35 +104,22 @@ where o.slug = 'lootie'
     where x.operator_id = o.id and x.title = 'Free box for new accounts'
   );
 
--- 4. The review ---------------------------------------------------------------
-insert into public.reviews (operator_id, market_id, body, verdict, status, published_at)
+update public.offers set
+  cta_label        = 'Get Free Box',
+  eligibility      = 'New accounts only.',
+  exclusive        = false,
+  last_verified_at = now()
+where title = 'Free box for new accounts'
+  and operator_id in (select id from public.operators where slug = 'lootie');
+
+-- 5. The review ---------------------------------------------------------------
+insert into public.reviews (
+  operator_id, market_id, body, verdict, status, published_at,
+  overall_score, score_descriptor, best_for_title, best_for_description,
+  seo_title, meta_description, last_checked_at
+)
 select o.id, m.id,
-$lootiebody$I have opened enough mystery boxes to know the feeling. The wheel slows down, the ticker drifts past a pair of Jordans, and for about half a second you genuinely believe it is going to stop there. Then it lands on a keychain.
-
-That feeling is the entire product. Lootie sells it better than almost anyone, which is exactly why it deserves a careful look rather than a hype piece.
-
-So here is my honest take after digging through Lootie's own policies, its odds disclosures, and several thousand customer reviews. I have tried to answer the question people actually type into Google at 1am: **is Lootie legit, or am I about to donate $60 to a company in Dublin?**
-
-## Quick Verdict
-
-**Rating: 3.5 out of 5**
-
-Lootie is a real, operating company that ships real products. It is not a scam in the "takes your money and vanishes" sense. It is also, mathematically, a losing proposition for most buyers, and it has a customer service record that ranges from fine to genuinely frustrating depending on how much you spend.
-
-**Good for:** People who want the unboxing experience and would be happy owning the mid tier items.
-
-**Bad for:** Anyone treating this as an investment, a flipping strategy, or a cheap route to a specific grail.
-
-| | |
-|---|---|
-| **Operator** | Lootie Limited (Reg No. 687650), Dublin, Ireland |
-| **Box price range** | From $0.99 to $2,000+ |
-| **Odds disclosed?** | Yes, per item, on every box |
-| **Provably fair?** | Yes, with a public verifier |
-| **Cash withdrawals** | **No.** Ship the item or take site credit |
-| **Ships to US?** | Yes, worldwide shipping |
-| **Payments** | Visa, Mastercard, PayPal, crypto via Coinbase, Steam |
-| **Free box** | Yes, for new accounts |
+$lootiebody$We spend a lot of time opening these boxes, and Lootie sells the fantasy better than almost anyone. Here is our honest take after digging through Lootie's own policies, its odds disclosures, and several thousand customer reviews.
 
 ## What Lootie Actually Is
 
@@ -159,8 +174,6 @@ On the gambling question, US law generally requires three elements together: con
 
 Worth noting: Lootie is unlicensed, because there is no license to hold for this category. If something goes wrong, there is no regulator to appeal to. Your recourse is Lootie's support team and your card issuer's chargeback process. Factor that in.
 
-I have also seen a claim that Lootie ceased operations in late 2025. That is not accurate. The platform is live and trading in 2026.
-
 ## Shipping and Authentication
 
 Lootie states it authenticates products before shipping and quotes the following delivery windows:
@@ -178,50 +191,9 @@ Lootie holds a 4 star TrustScore on Trustpilot across roughly 5,600 reviews. You
 
 **What happy customers say:** wide selection, good value on the cheap boxes, fast delivery on smaller items, the provably fair system builds confidence, live chat responds quickly.
 
-**What unhappy customers say:** and this is where you should pay attention.
+**What unhappy customers say:** items won and never received in some cases over many months, sell back credit landing well below the advertised prize value, email support taking days or going unanswered, and difficulty escalating disputes on high value pulls.
 
-- Items won and never received, in some cases over periods of many months
-- Sell back credit landing well below the advertised prize value
-- Email support taking days, or going unanswered entirely
-- Difficulty escalating disputes on high value pulls
-
-The pattern I see is that **low value orders generally go fine and high value orders are where the friction lives.** The Reddit mystery box community broadly treats Lootie as legitimate while flagging that most boxes are negative expected value. That is a fair summary and it matches my read.
-
-If you do use Lootie, use live chat rather than email. Response times are dramatically better, usually inside a few minutes versus 24 to 72 hours for tickets.
-
-## Free Box and Promos
-
-New accounts can claim a free box, which is the correct way to test the platform. Open it, request shipping, and see what actually turns up. That single test tells you more than any review, including this one.
-
-Lootie also runs periodic promo codes and giveaways. Be skeptical of the coupon sites promising huge deposit bonuses; most of those codes are dead or are affiliate links dressed up as discounts.
-
-## Lootie vs the Alternatives
-
-| Platform | Cash out? | Odds shown | Best for |
-|---|---|---|---|
-| **Lootie** | No | Yes | Catalog size, brand names, wanting the actual product |
-| **PackDraw** | Yes | Yes | Buyers who want a withdrawable balance |
-| **Cases.GG** | Yes | Yes | Trading and flipping oriented users |
-| **HypeDrop** | Limited | Yes | Streetwear focus |
-| **JemLit** | Yes | Yes | UK and EU shipping speed |
-
-If cash out matters to you at all, Lootie is the wrong platform. If you genuinely want the products, its catalog depth is a real advantage.
-
-## Who Should Use Lootie
-
-**Try it if you:**
-
-- Want the unboxing experience and treat the spend as entertainment
-- Would be happy owning the common tier items in a box
-- Are buying in the lower price bands where fulfillment is most reliable
-- Intend to ship what you win rather than churn credit
-
-**Avoid it if you:**
-
-- Are hoping to profit, flip, or beat the odds
-- Want a withdrawable cash balance
-- Are chasing one specific grail item
-- Cannot comfortably afford to lose what you deposit
+The pattern I see is that **low value orders generally go fine and high value orders are where the friction lives.** If you do use Lootie, use live chat rather than email. Response times are dramatically better, usually inside a few minutes versus 24 to 72 hours for tickets.
 
 ## Final Word
 
@@ -231,40 +203,60 @@ But it is not a shortcut to cheap designer goods, and the no cash out structure 
 
 Treat it as entertainment and it is a reasonable time. Treat it as a strategy and the math will find you eventually.
 
-## FAQ
-
-**Is Lootie legit?**
-Yes. Lootie Limited is a registered Irish company that has been operating for several years and does ship real products. It holds a 4 star Trustpilot rating across roughly 5,600 reviews. It is legitimate, though not without meaningful customer service complaints on higher value orders.
-
-**Is Lootie a scam?**
-No. The persistent complaints are about delivery delays, unresponsive support, and sell back values that fall short of displayed prize figures, rather than outright theft. Those are real problems, but they are service problems, not fraud.
-
-**Can I withdraw cash from Lootie?**
-No. There is no cash withdrawal of any kind. You either ship the item you won or convert it to site credit for further openings.
-
-**Does Lootie ship to the United States?**
-Yes. Lootie ships worldwide. US buyers are responsible for any customs duties or import taxes.
-
-**Is Lootie gambling?**
-Under US law, generally no. Every purchase delivers a physical product, so the legal test for gambling is not met. Randomness determines which item you receive, not whether you receive one.
-
-**What are the odds of winning something good on Lootie?**
-Every box lists exact per item percentages. Headline items such as GPUs and flagship electronics often sit below 0.1%. Assume you will land in the common tier and choose boxes accordingly.
-
-**Is Lootie still operating in 2026?**
-Yes. Despite claims elsewhere that it shut down in late 2025, the platform is active and trading.
-
 ---
 
 *Mystery boxes are a form of chance based spending. Only spend what you can comfortably afford to lose. If you feel your spending is becoming a problem, support is available through the National Council on Problem Gambling at 1-800-522-4700.*$lootiebody$,
   $v$Lootie is legitimate and well stocked, and it is best treated as entertainment at the lower price points rather than a way to profit or to buy a specific item cheaply.$v$,
   'published',
+  now(),
+  3.5,
+  'Good',
+  'Unboxing for the fun of it',
+  'People who want the unboxing experience and would be happy owning the mid tier items.',
+  'Lootie Review (2026): Is It Legit, and Is It Worth Your Money?',
+  'An honest Lootie review for US buyers. Real odds, the no cash out catch, shipping times, Trustpilot complaints, and whether Lootie mystery boxes are actually worth it.',
   now()
 from public.operators o, public.markets m
 where o.slug = 'lootie' and m.code = 'us'
 on conflict (operator_id, market_id) do update set
-  body         = excluded.body,
-  verdict      = excluded.verdict,
-  status       = 'published',
-  updated_at   = now(),
-  published_at = coalesce(public.reviews.published_at, excluded.published_at);
+  body                = excluded.body,
+  verdict             = excluded.verdict,
+  status              = 'published',
+  updated_at          = now(),
+  published_at        = coalesce(public.reviews.published_at, excluded.published_at),
+  overall_score       = excluded.overall_score,
+  score_descriptor    = excluded.score_descriptor,
+  best_for_title      = excluded.best_for_title,
+  best_for_description= excluded.best_for_description,
+  seo_title           = excluded.seo_title,
+  meta_description    = excluded.meta_description,
+  last_checked_at     = excluded.last_checked_at;
+
+-- 6. FAQs (verbatim from the review's own FAQ section) ------------------------
+delete from public.review_faqs
+  where review_id in (
+    select r.id from public.reviews r
+    join public.operators o on o.id = r.operator_id
+    where o.slug = 'lootie'
+  );
+insert into public.review_faqs (review_id, question, answer, position)
+select r.id, f.question, f.answer, f.position
+from public.reviews r
+join public.operators o on o.id = r.operator_id
+cross join (values
+  ('Is Lootie legit?',
+   $a$Yes. Lootie Limited is a registered Irish company that has been operating for several years and does ship real products. It holds a 4 star Trustpilot rating across roughly 5,600 reviews. It is legitimate, though not without meaningful customer service complaints on higher value orders.$a$, 0),
+  ('Is Lootie a scam?',
+   $a$No. The persistent complaints are about delivery delays, unresponsive support, and sell back values that fall short of displayed prize figures, rather than outright theft. Those are real problems, but they are service problems, not fraud.$a$, 1),
+  ('Can I withdraw cash from Lootie?',
+   $a$No. There is no cash withdrawal of any kind. You either ship the item you won or convert it to site credit for further openings.$a$, 2),
+  ('Does Lootie ship to the United States?',
+   $a$Yes. Lootie ships worldwide. US buyers are responsible for any customs duties or import taxes.$a$, 3),
+  ('Is Lootie gambling?',
+   $a$Under US law, generally no. Every purchase delivers a physical product, so the legal test for gambling is not met. Randomness determines which item you receive, not whether you receive one.$a$, 4),
+  ('What are the odds of winning something good on Lootie?',
+   $a$Every box lists exact per item percentages. Headline items such as GPUs and flagship electronics often sit below 0.1%. Assume you will land in the common tier and choose boxes accordingly.$a$, 5),
+  ('Is Lootie still operating in 2026?',
+   $a$Yes. Despite claims elsewhere that it shut down in late 2025, the platform is active and trading.$a$, 6)
+) as f(question, answer, position)
+where o.slug = 'lootie';
