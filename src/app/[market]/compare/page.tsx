@@ -2,31 +2,44 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { OperatorCard } from '@/components/operator-card';
-import { getVisibleOperatorsForMarket } from '@/lib/data/operators';
+import { CompareTool } from '@/components/compare/compare-tool';
+import { getComparePlatforms } from '@/lib/data/compare';
 import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { getRequestGeoContext } from '@/lib/request-context';
 import { marketAlternates } from '@/lib/seo';
 
 type Params = { market: string };
+type Search = { ids?: string };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { market } = await params;
   if (!isSupportedMarket(market)) return {};
   return {
     title: 'Compare mystery box platforms',
-    description: `Side by side comparison of mystery box operators in the ${MARKET_LABELS[market]}.`,
+    description: `Compare mystery box platforms side by side on score, offers, payments, shipping and more in the ${MARKET_LABELS[market]}.`,
     alternates: marketAlternates(market, '/compare'),
   };
 }
 
-export default async function ComparePage({ params }: { params: Promise<Params> }) {
+export default async function ComparePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams: Promise<Search>;
+}) {
   const { market } = await params;
   if (!isSupportedMarket(market)) notFound();
   const marketCode = market as MarketCode;
 
+  const { ids } = await searchParams;
+  const initialSlugs = (ids ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   const { geoChain } = await getRequestGeoContext();
-  const operators = await getVisibleOperatorsForMarket(marketCode, geoChain);
+  const platforms = await getComparePlatforms(marketCode, geoChain);
 
   return (
     <div className="space-y-8">
@@ -36,39 +49,20 @@ export default async function ComparePage({ params }: { params: Promise<Params> 
           { name: 'Compare', path: marketPath(marketCode, '/compare') },
         ]}
       />
-      <header className="space-y-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-ink">Compare platforms</h1>
-        <p className="text-muted">
-          Every operator available in the {MARKET_LABELS[marketCode]}, side by side.
+      <header className="max-w-2xl space-y-3">
+        <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          Compare mystery box websites
+        </h1>
+        <p className="text-lg text-muted">
+          Put the top mystery box platforms side by side on score, welcome offer, payments, shipping
+          and more. Pick up to four to compare.
         </p>
       </header>
 
-      {operators.length === 0 ? (
-        <p className="text-muted">We have nothing to show here for your region right now.</p>
+      {platforms.length === 0 ? (
+        <p className="text-muted">We have nothing to compare for your region right now.</p>
       ) : (
-        <div className="overflow-x-auto pb-2">
-          <table className="w-full min-w-[860px] overflow-hidden rounded-xl border border-line text-left">
-            <thead>
-              <tr className="bg-raised text-xs font-bold uppercase tracking-wider text-muted">
-                <th className="py-3 pl-6 pr-3">Operator</th>
-                <th className="px-3 py-3">Rating</th>
-                <th className="px-3 py-3">Notes</th>
-                <th className="py-3 pl-3 pr-6 text-right">Visit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {operators.map((op, i) => (
-                <OperatorCard
-                  key={op.id}
-                  operator={op}
-                  market={marketCode}
-                  variant="table_row"
-                  featured={i === 0 && op.rating != null}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <CompareTool platforms={platforms} market={marketCode} initialSlugs={initialSlugs} />
       )}
     </div>
   );
