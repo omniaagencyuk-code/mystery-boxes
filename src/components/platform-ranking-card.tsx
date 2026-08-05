@@ -28,14 +28,19 @@ function RankBadge({ rank }: { rank: number }) {
 }
 
 function CardLogo({ operator }: { operator: OperatorSummary }) {
+  // Always show the brand name. When a logo exists, the name sits underneath it
+  // as a label; otherwise the name is the brand mark itself.
   if (operator.logoUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- arbitrary logo hosts
-      <img
-        src={operator.logoUrl}
-        alt={`${operator.name} logo`}
-        className="h-10 w-auto max-w-[70%] object-contain"
-      />
+      <div className="flex flex-col items-center gap-1.5 text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary logo hosts */}
+        <img
+          src={operator.logoUrl}
+          alt={`${operator.name} logo`}
+          className="h-10 w-auto max-w-[80%] object-contain"
+        />
+        <span className="text-base font-bold text-ink">{operator.name}</span>
+      </div>
     );
   }
   return <span className="text-xl font-black tracking-tight text-ink">{operator.name}</span>;
