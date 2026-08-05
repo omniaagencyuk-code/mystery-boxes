@@ -8,6 +8,20 @@ export type OperatorTypeSlug = 'physical_retail' | 'digital_unboxing';
 export type PublishStatus = 'draft' | 'published';
 export type AdminRole = 'admin' | 'editor' | 'reviewer';
 
+export type HomepageSectionType =
+  | 'top_rated'
+  | 'comparison'
+  | 'category_cards'
+  | 'featured_brands'
+  | 'verified_offers'
+  | 'latest_reviews'
+  | 'latest_guides'
+  | 'how_we_rate'
+  | 'trust'
+  | 'faq'
+  | 'newsletter'
+  | 'final_cta';
+
 export type ReviewBlockType =
   | 'RICH_TEXT'
   | 'IMAGE_LEFT'
@@ -93,6 +107,7 @@ export interface Database {
           mobile_app: string | null;
           shipping_info: string | null;
           support_info: string | null;
+          featured: boolean;
         };
         Insert: {
           id?: string;
@@ -124,6 +139,7 @@ export interface Database {
           mobile_app?: string | null;
           shipping_info?: string | null;
           support_info?: string | null;
+          featured?: boolean;
         };
         Update: Partial<Database['public']['Tables']['operators']['Insert']>;
         Relationships: [];
@@ -462,6 +478,92 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['audit_log']['Insert']>;
         Relationships: [];
       };
+      homepage_settings: {
+        Row: {
+          market_id: string;
+          hero_title: string | null;
+          hero_intro: string | null;
+          hero_image_url: string | null;
+          cta_primary_label: string | null;
+          cta_primary_href: string | null;
+          cta_secondary_label: string | null;
+          cta_secondary_href: string | null;
+          how_we_rate: string | null;
+          trust_content: string | null;
+          newsletter_heading: string | null;
+          newsletter_body: string | null;
+          final_cta_heading: string | null;
+          final_cta_body: string | null;
+          final_cta_label: string | null;
+          final_cta_href: string | null;
+          seo_title: string | null;
+          meta_description: string | null;
+          canonical_url: string | null;
+          og_image_url: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          market_id: string;
+          hero_title?: string | null;
+          hero_intro?: string | null;
+          hero_image_url?: string | null;
+          cta_primary_label?: string | null;
+          cta_primary_href?: string | null;
+          cta_secondary_label?: string | null;
+          cta_secondary_href?: string | null;
+          how_we_rate?: string | null;
+          trust_content?: string | null;
+          newsletter_heading?: string | null;
+          newsletter_body?: string | null;
+          final_cta_heading?: string | null;
+          final_cta_body?: string | null;
+          final_cta_label?: string | null;
+          final_cta_href?: string | null;
+          seo_title?: string | null;
+          meta_description?: string | null;
+          canonical_url?: string | null;
+          og_image_url?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['homepage_settings']['Insert']>;
+        Relationships: [];
+      };
+      homepage_sections: {
+        Row: {
+          id: string;
+          market_id: string;
+          section_type: HomepageSectionType;
+          position: number;
+          visible: boolean;
+        };
+        Insert: {
+          id?: string;
+          market_id: string;
+          section_type: HomepageSectionType;
+          position?: number;
+          visible?: boolean;
+        };
+        Update: Partial<Database['public']['Tables']['homepage_sections']['Insert']>;
+        Relationships: [];
+      };
+      homepage_trust_indicators: {
+        Row: { id: string; market_id: string; label: string; position: number };
+        Insert: { id?: string; market_id: string; label: string; position?: number };
+        Update: Partial<Database['public']['Tables']['homepage_trust_indicators']['Insert']>;
+        Relationships: [];
+      };
+      homepage_faqs: {
+        Row: { id: string; market_id: string; question: string; answer: string; position: number };
+        Insert: { id?: string; market_id: string; question: string; answer: string; position?: number };
+        Update: Partial<Database['public']['Tables']['homepage_faqs']['Insert']>;
+        Relationships: [];
+      };
+      newsletter_subscribers: {
+        Row: { id: string; email: string; market_id: string | null; created_at: string };
+        Insert: { id?: string; email: string; market_id?: string | null; created_at?: string };
+        Update: Partial<Database['public']['Tables']['newsletter_subscribers']['Insert']>;
+        Relationships: [];
+      };
       media: {
         Row: {
           id: string;
@@ -606,6 +708,10 @@ export interface Database {
         };
         Returns: undefined;
       };
+      subscribe_newsletter: {
+        Args: { subscriber_email: string; market?: string | null };
+        Returns: undefined;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -637,3 +743,8 @@ export type CategoryShortcutRow = Database['public']['Tables']['category_shortcu
 export type CategoryBrandRow = Database['public']['Tables']['category_brands']['Row'];
 export type CategoryFaqRow = Database['public']['Tables']['category_faqs']['Row'];
 export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];
+export type HomepageSettingsRow = Database['public']['Tables']['homepage_settings']['Row'];
+export type HomepageSectionRow = Database['public']['Tables']['homepage_sections']['Row'];
+export type HomepageTrustIndicatorRow =
+  Database['public']['Tables']['homepage_trust_indicators']['Row'];
+export type HomepageFaqRow = Database['public']['Tables']['homepage_faqs']['Row'];
