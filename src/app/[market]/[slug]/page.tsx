@@ -2,11 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { CategoryLanding } from '@/components/category/category-landing';
 import { Markdown } from '@/components/markdown';
-import { OperatorCard } from '@/components/operator-card';
-import { PlatformRankingCard } from '@/components/platform-ranking-card';
-import { getCategoryForMarket, getMarketPromoOffers, getPageForMarket } from '@/lib/data/content';
-import { getVisibleOperatorsForCategory } from '@/lib/data/operators';
+import { getCategoryForMarket, getPageForMarket } from '@/lib/data/content';
+import { getCategoryPageData } from '@/lib/data/category-page';
 import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import type { CategoryRow, PageRow } from '@/lib/supabase/types';
 import { getRequestGeoContext } from '@/lib/request-context';
@@ -15,13 +14,10 @@ import { marketAlternates } from '@/lib/seo';
 type Params = { market: string; slug: string };
 
 /**
- * A single /[market]/[slug] URL can be a category listing or a guide/money page.
+ * A single /[market]/[slug] URL can be a category landing or a guide/money page.
  * Categories are resolved first, then pages. The `reviews` segment is a separate
  * static route, so it never reaches here.
  */
-// Static sections own these URLs, so a category or page must never resolve here
-// under the same slug. 'uk' and 'us' are reserved too: 'uk' is the UK section
-// and 'us' redirects to the root.
 const RESERVED = new Set([
   'reviews',
   'news',
@@ -61,9 +57,10 @@ export async function generateMetadata({
   if (!resolved) return { alternates };
 
   if (resolved.kind === 'category') {
+    const c = resolved.category;
     return {
-      title: resolved.category.name,
-      description: resolved.category.description ?? undefined,
+      title: c.seo_title?.trim() || c.name,
+      description: c.meta_description?.trim() || c.description || undefined,
       alternates,
     };
   }
@@ -93,63 +90,31 @@ export default async function MarketSlugPage({
   ];
 
   if (resolved.kind === 'category') {
-    const { category } = resolved;
     const { geoChain } = await getRequestGeoContext();
-    const [operators, promo] = await Promise.all([
-      getVisibleOperatorsForCategory(marketCode, category.id, geoChain),
-      getMarketPromoOffers(marketCode, geoChain),
-    ]);
-
-    // Real per-operator headline offer from the DB.
-    const offerTitleByOperator = new Map<string, string>();
-    for (const { operator, offer } of promo) {
-      if (!offerTitleByOperator.has(operator.id)) offerTitleByOperator.set(operator.id, offer.title);
-    }
-
-    const topRated = operators.slice(0, 5);
-    const rest = operators.slice(5);
+    const data = await getCategoryPageData(marketCode, slug, geoChain);
+    if (!data) notFound();
 
     return (
-      <div className="space-y-10">
-        <Breadcrumbs items={crumbs(category.name)} />
-        <header className="max-w-2xl space-y-3">
-          <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
-            {category.name}
-          </h1>
-          {category.description && <p className="text-lg text-muted">{category.description}</p>}
-        </header>
-
-        {operators.length === 0 ? (
-          <p className="text-muted">We have nothing to show here for your region right now.</p>
-        ) : (
+      <div className="space-y-8">
+        <Breadcrumbs
+          items={[
+            { name: MARKET_LABELS[marketCode], path: marketPath(marketCode) },
+            { name: 'Categories', path: marketPath(marketCode, '/categories') },
+            { name: data.category.name, path: marketPath(marketCode, `/${slug}`) },
+          ]}
+        />
+        {data.operators.length === 0 && !data.category.intro ? (
           <>
-            <section className="space-y-5">
-              <h2 className="text-2xl font-bold text-ink">Top rated {category.name}</h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                {topRated.map((op, i) => (
-                  <PlatformRankingCard
-                    key={op.id}
-                    operator={op}
-                    rank={i + 1}
-                    market={marketCode}
-                    offerTitle={offerTitleByOperator.get(op.id) ?? null}
-                    primaryCta="visit"
-                  />
-                ))}
-              </div>
-            </section>
-
-            {rest.length > 0 && (
-              <section className="space-y-4">
-                <h2 className="text-xl font-bold text-ink">More sites</h2>
-                <div className="space-y-4">
-                  {rest.map((op) => (
-                    <OperatorCard key={op.id} operator={op} market={marketCode} variant="full" />
-                  ))}
-                </div>
-              </section>
-            )}
+            <header className="max-w-2xl space-y-3">
+              <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+                {data.category.h1 || data.category.name}
+              </h1>
+              {data.category.description && <p className="text-lg text-muted">{data.category.description}</p>}
+            </header>
+            <p className="text-muted">We have nothing to show here for your region right now.</p>
           </>
+        ) : (
+          <CategoryLanding data={data} market={marketCode} />
         )}
       </div>
     );
