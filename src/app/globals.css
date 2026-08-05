@@ -23,6 +23,7 @@
   --star: #d97706;
   --success: #059669;
   --danger: #e11d48;
+  --warning: #b45309;
 
   /* Translucent glass fills for comparison rows and cards. */
   --glass: rgba(255, 255, 255, 0.72);
@@ -34,48 +35,52 @@
 .dark {
   color-scheme: dark;
 
-  --base: #0a0812;
-  --surface: #15121b;
-  --elevated: #1d1a24;
-  --raised: #2c2833;
-  --line: #372f45;
-  --ink: #e8dfee;
-  --muted: #a79fb4;
-  --primary: #d2bbff;
-  --onprimary: #25005a;
-  --accent: #adc6ff;
-  --star: #fbbf24;
-  --success: #34d399;
-  --danger: #ffb4ab;
+  /* Navy design system (matches the review-page master reference), applied
+     site-wide so every page shares one dark, blue-forward look. */
+  --base: #030817;
+  --surface: #0b1730;
+  --elevated: #0d1933;
+  --raised: #091328;
+  --line: rgba(130, 155, 210, 0.16);
+  --ink: #f6f8ff;
+  --muted: #a8b2cc;
+  --primary: #2684ff;
+  --onprimary: #ffffff;
+  --accent: #19c7ff;
+  --star: #ffc107;
+  --success: #23d567;
+  --danger: #ff5a65;
+  --warning: #ff9f43;
 
-  --glass: rgba(44, 40, 51, 0.42);
-  --glass-alt: rgba(34, 30, 40, 0.42);
-  --grad-from: #7c3aed;
-  --grad-to: #0566d9;
+  --glass: rgba(13, 25, 51, 0.55);
+  --glass-alt: rgba(9, 19, 40, 0.55);
+  --grad-from: #1677ff;
+  --grad-to: #19c7ff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
     color-scheme: dark;
 
-    --base: #0a0812;
-    --surface: #15121b;
-    --elevated: #1d1a24;
-    --raised: #2c2833;
-    --line: #372f45;
-    --ink: #e8dfee;
-    --muted: #a79fb4;
-    --primary: #d2bbff;
-    --onprimary: #25005a;
-    --accent: #adc6ff;
-    --star: #fbbf24;
-    --success: #34d399;
-    --danger: #ffb4ab;
+    --base: #030817;
+    --surface: #0b1730;
+    --elevated: #0d1933;
+    --raised: #091328;
+    --line: rgba(130, 155, 210, 0.16);
+    --ink: #f6f8ff;
+    --muted: #a8b2cc;
+    --primary: #2684ff;
+    --onprimary: #ffffff;
+    --accent: #19c7ff;
+    --star: #ffc107;
+    --success: #23d567;
+    --danger: #ff5a65;
+    --warning: #ff9f43;
 
-    --glass: rgba(44, 40, 51, 0.42);
-    --glass-alt: rgba(34, 30, 40, 0.42);
-    --grad-from: #7c3aed;
-    --grad-to: #0566d9;
+    --glass: rgba(13, 25, 51, 0.55);
+    --glass-alt: rgba(9, 19, 40, 0.55);
+    --grad-from: #1677ff;
+    --grad-to: #19c7ff;
   }
 }
 
@@ -93,6 +98,7 @@
   --color-star: var(--star);
   --color-success: var(--success);
   --color-danger: var(--danger);
+  --color-warning: var(--warning);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
@@ -109,8 +115,9 @@ body {
 /* Subtle brand glow in the dark theme so large surfaces are not flat black. */
 .dark body {
   background-image:
-    radial-gradient(1100px 560px at 85% -8%, color-mix(in srgb, var(--primary) 14%, transparent), transparent),
-    radial-gradient(900px 520px at 0% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent);
+    radial-gradient(1100px 560px at 85% -8%, color-mix(in srgb, var(--primary) 12%, transparent), transparent),
+    radial-gradient(760px 460px at 92% -2%, rgba(132, 83, 255, 0.10), transparent),
+    radial-gradient(900px 520px at 0% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent);
   background-attachment: fixed;
 }
 

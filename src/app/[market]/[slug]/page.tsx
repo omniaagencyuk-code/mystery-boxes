@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Markdown } from '@/components/markdown';
 import { OperatorCard } from '@/components/operator-card';
-import { getCategoryForMarket, getPageForMarket } from '@/lib/data/content';
+import { PlatformRankingCard } from '@/components/platform-ranking-card';
+import { getCategoryForMarket, getMarketPromoOffers, getPageForMarket } from '@/lib/data/content';
 import { getVisibleOperatorsForCategory } from '@/lib/data/operators';
 import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import type { CategoryRow, PageRow } from '@/lib/supabase/types';
@@ -94,24 +95,61 @@ export default async function MarketSlugPage({
   if (resolved.kind === 'category') {
     const { category } = resolved;
     const { geoChain } = await getRequestGeoContext();
-    const operators = await getVisibleOperatorsForCategory(marketCode, category.id, geoChain);
+    const [operators, promo] = await Promise.all([
+      getVisibleOperatorsForCategory(marketCode, category.id, geoChain),
+      getMarketPromoOffers(marketCode, geoChain),
+    ]);
+
+    // Real per-operator headline offer from the DB.
+    const offerTitleByOperator = new Map<string, string>();
+    for (const { operator, offer } of promo) {
+      if (!offerTitleByOperator.has(operator.id)) offerTitleByOperator.set(operator.id, offer.title);
+    }
+
+    const topRated = operators.slice(0, 5);
+    const rest = operators.slice(5);
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-10">
         <Breadcrumbs items={crumbs(category.name)} />
-        <header className="space-y-2">
-          <h1 className="text-3xl font-extrabold tracking-tight text-ink">{category.name}</h1>
-          {category.description && <p className="text-muted">{category.description}</p>}
+        <header className="max-w-2xl space-y-3">
+          <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+            {category.name}
+          </h1>
+          {category.description && <p className="text-lg text-muted">{category.description}</p>}
         </header>
 
         {operators.length === 0 ? (
           <p className="text-muted">We have nothing to show here for your region right now.</p>
         ) : (
-          <div className="space-y-4">
-            {operators.map((op) => (
-              <OperatorCard key={op.id} operator={op} market={marketCode} variant="full" />
-            ))}
-          </div>
+          <>
+            <section className="space-y-5">
+              <h2 className="text-2xl font-bold text-ink">Top rated {category.name}</h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                {topRated.map((op, i) => (
+                  <PlatformRankingCard
+                    key={op.id}
+                    operator={op}
+                    rank={i + 1}
+                    market={marketCode}
+                    offerTitle={offerTitleByOperator.get(op.id) ?? null}
+                    primaryCta="visit"
+                  />
+                ))}
+              </div>
+            </section>
+
+            {rest.length > 0 && (
+              <section className="space-y-4">
+                <h2 className="text-xl font-bold text-ink">More sites</h2>
+                <div className="space-y-4">
+                  {rest.map((op) => (
+                    <OperatorCard key={op.id} operator={op} market={marketCode} variant="full" />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
         )}
       </div>
     );
