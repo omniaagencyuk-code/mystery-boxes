@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { adminDb } from '@/lib/admin/db';
+import { adminContext, adminContextWithRole, adminDb } from '@/lib/admin/db';
+import { logAudit } from '@/lib/admin/audit';
 import {
   bool,
   jsonRows,
@@ -33,7 +34,7 @@ async function resolveMediaUrl(
 }
 
 export async function saveOperator(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContext();
   const id = str(formData, 'id');
   const name = str(formData, 'name').trim();
 
@@ -168,17 +169,25 @@ export async function saveOperator(formData: FormData) {
     if (error) throw new Error(error.message);
   }
 
+  await logAudit(db, admin, {
+    action: id && id !== 'new' ? 'update' : 'create',
+    entity: 'operator',
+    entityId: operatorId,
+    summary: name || null,
+  });
+
   revalidatePath('/admin/operators');
   redirect('/admin/operators');
 }
 
 export async function deleteOperator(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContextWithRole(['admin']);
   const id = str(formData, 'id');
   if (id) {
     // operator_markets, operator_categories, offers, reviews cascade on delete.
     const { error } = await db.from('operators').delete().eq('id', id);
     if (error) throw new Error(error.message);
+    await logAudit(db, admin, { action: 'delete', entity: 'operator', entityId: id });
   }
   revalidatePath('/admin/operators');
 }

@@ -14,6 +14,8 @@ const LINKS = [
   { href: '/admin/affiliate-links', label: 'Affiliate links' },
   { href: '/admin/media', label: 'Media' },
   { href: '/admin/menu', label: 'Menu' },
+  { href: '/admin/seo', label: 'SEO' },
+  { href: '/admin/audit', label: 'Audit log' },
 ];
 
 export function AdminNav() {

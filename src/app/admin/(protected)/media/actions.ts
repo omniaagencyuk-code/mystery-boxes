@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { adminDb } from '@/lib/admin/db';
+import { adminContext, adminContextWithRole } from '@/lib/admin/db';
+import { logAudit } from '@/lib/admin/audit';
 import { str, strOrNull } from '@/lib/admin/form';
 
 const BUCKET = 'media';
@@ -26,7 +27,7 @@ function uploadError(message: string): never {
 }
 
 export async function uploadMedia(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContext();
   const file = formData.get('file');
   if (!(file instanceof File) || file.size === 0) {
     uploadError('Choose a file to upload.');
@@ -61,12 +62,19 @@ export async function uploadMedia(formData: FormData) {
   });
   if (error) throw new Error(error.message);
 
+  await logAudit(db, admin, {
+    action: 'create',
+    entity: 'media',
+    entityId: null,
+    summary: strOrNull(formData, 'title') ?? file.name,
+  });
+
   revalidatePath('/admin/media');
   redirect('/admin/media');
 }
 
 export async function updateMedia(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContext();
   const id = str(formData, 'id');
   const { error } = await db
     .from('media')
@@ -74,12 +82,19 @@ export async function updateMedia(formData: FormData) {
     .eq('id', id);
   if (error) throw new Error(error.message);
 
+  await logAudit(db, admin, {
+    action: 'update',
+    entity: 'media',
+    entityId: id,
+    summary: strOrNull(formData, 'title'),
+  });
+
   revalidatePath('/admin/media');
   redirect('/admin/media');
 }
 
 export async function deleteMedia(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContextWithRole(['admin']);
   const id = str(formData, 'id');
   if (!id) return;
 
@@ -88,6 +103,7 @@ export async function deleteMedia(formData: FormData) {
     await db.storage.from(row.bucket).remove([row.path]);
     const { error } = await db.from('media').delete().eq('id', id);
     if (error) throw new Error(error.message);
+    await logAudit(db, admin, { action: 'delete', entity: 'media', entityId: id });
   }
   revalidatePath('/admin/media');
 }

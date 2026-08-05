@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { adminDb } from '@/lib/admin/db';
+import { adminContext, adminContextWithRole, adminDb } from '@/lib/admin/db';
+import { logAudit } from '@/lib/admin/audit';
 import { bool, str, strOrNull } from '@/lib/admin/form';
 
 async function nextPosition(
@@ -25,7 +26,7 @@ async function nextPosition(
 }
 
 export async function saveMenuItem(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContext();
   const id = str(formData, 'id');
   const marketId = str(formData, 'market_id');
   const location = str(formData, 'location') === 'footer' ? 'footer' : 'header';
@@ -80,23 +81,31 @@ export async function saveMenuItem(formData: FormData) {
     if (error) throw new Error(error.message);
   }
 
+  await logAudit(db, admin, {
+    action: id && id !== 'new' ? 'update' : 'create',
+    entity: 'menu_item',
+    entityId: id && id !== 'new' ? id : null,
+    summary: base.label || null,
+  });
+
   revalidatePath('/admin/menu');
   redirect('/admin/menu');
 }
 
 export async function deleteMenuItem(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContextWithRole(['admin']);
   const id = str(formData, 'id');
   if (id) {
     // Children cascade via the FK.
     const { error } = await db.from('menu_items').delete().eq('id', id);
     if (error) throw new Error(error.message);
+    await logAudit(db, admin, { action: 'delete', entity: 'menu_item', entityId: id });
   }
   revalidatePath('/admin/menu');
 }
 
 export async function moveMenuItem(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContext();
   const id = str(formData, 'id');
   const dir = str(formData, 'dir'); // 'up' | 'down'
 
@@ -124,6 +133,13 @@ export async function moveMenuItem(formData: FormData) {
   // Swap positions.
   await db.from('menu_items').update({ position: swapWith.position }).eq('id', item.id);
   await db.from('menu_items').update({ position: item.position }).eq('id', swapWith.id);
+
+  await logAudit(db, admin, {
+    action: 'update',
+    entity: 'menu_item',
+    entityId: item.id,
+    summary: item.label ?? null,
+  });
 
   revalidatePath('/admin/menu');
 }

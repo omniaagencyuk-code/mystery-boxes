@@ -3,11 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { adminDb } from '@/lib/admin/db';
+import { adminContext, adminContextWithRole } from '@/lib/admin/db';
+import { logAudit } from '@/lib/admin/audit';
 import { bool, str, strOrNull, timestampOrNull } from '@/lib/admin/form';
 
 export async function saveOffer(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContext();
   const id = str(formData, 'id');
 
   const values = {
@@ -27,16 +28,24 @@ export async function saveOffer(formData: FormData) {
       : await db.from('offers').insert(values);
   if (error) throw new Error(error.message);
 
+  await logAudit(db, admin, {
+    action: id && id !== 'new' ? 'update' : 'create',
+    entity: 'offer',
+    entityId: id && id !== 'new' ? id : null,
+    summary: values.title || null,
+  });
+
   revalidatePath('/admin/offers');
   redirect('/admin/offers');
 }
 
 export async function deleteOffer(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContextWithRole(['admin']);
   const id = str(formData, 'id');
   if (id) {
     const { error } = await db.from('offers').delete().eq('id', id);
     if (error) throw new Error(error.message);
+    await logAudit(db, admin, { action: 'delete', entity: 'offer', entityId: id });
   }
   revalidatePath('/admin/offers');
 }

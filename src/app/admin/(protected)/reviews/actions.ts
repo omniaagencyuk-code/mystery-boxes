@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { adminDb } from '@/lib/admin/db';
+import { adminContext, adminContextWithRole } from '@/lib/admin/db';
+import { logAudit } from '@/lib/admin/audit';
 import {
   jsonRows,
   numOrNull,
@@ -47,7 +48,7 @@ function parseConfig(raw: string): Json {
 }
 
 export async function saveReview(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContext();
   const id = str(formData, 'id');
   const status: PublishStatus = str(formData, 'status') === 'published' ? 'published' : 'draft';
   const existingPublishedAt = strOrNull(formData, 'published_at');
@@ -142,16 +143,24 @@ export async function saveReview(formData: FormData) {
     if (error) throw new Error(error.message);
   }
 
+  await logAudit(db, admin, {
+    action: id && id !== 'new' ? 'update' : 'create',
+    entity: 'review',
+    entityId: reviewId,
+    summary: strOrNull(formData, 'seo_title'),
+  });
+
   revalidatePath('/admin/reviews');
   redirect('/admin/reviews');
 }
 
 export async function deleteReview(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContextWithRole(['admin']);
   const id = str(formData, 'id');
   if (id) {
     const { error } = await db.from('reviews').delete().eq('id', id);
     if (error) throw new Error(error.message);
+    await logAudit(db, admin, { action: 'delete', entity: 'review', entityId: id });
   }
   revalidatePath('/admin/reviews');
 }

@@ -1,5 +1,5 @@
 import { createServerSupabase } from '@/lib/supabase/server';
-import type { AdminRow } from '@/lib/supabase/types';
+import type { AdminRole, AdminRow } from '@/lib/supabase/types';
 
 /**
  * The current admin, or null. Null means either no logged-in user or a
@@ -31,5 +31,18 @@ export async function getCurrentAdmin(): Promise<AdminRow | null> {
 export async function requireAdminForAction(): Promise<AdminRow> {
   const admin = await getCurrentAdmin();
   if (!admin) throw new Error('Not authorised');
+  return admin;
+}
+
+/**
+ * Guard for server actions that require a specific role. Throws unless the
+ * caller is an active admin whose role is in `allowed`. All authorisation is
+ * enforced here, server-side, never in the client.
+ */
+export async function requireRoleForAction(allowed: readonly AdminRole[]): Promise<AdminRow> {
+  const admin = await requireAdminForAction();
+  if (!allowed.includes(admin.role)) {
+    throw new Error('You do not have permission to do that');
+  }
   return admin;
 }
