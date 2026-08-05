@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { OperatorCompliance } from '@/components/compliance';
-import { OutboundLink } from '@/components/outbound-link';
+import { PromoList, type PromoItem } from '@/components/promo/promo-list';
 import { getMarketPromoOffers } from '@/lib/data/content';
 import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
-import { reviewPath } from '@/lib/models';
+import { formatReviewDate } from '@/lib/reviews/format';
+import { offerState } from '@/lib/reviews/offer-state';
 import { getRequestGeoContext } from '@/lib/request-context';
 import { marketAlternates } from '@/lib/seo';
 
@@ -17,8 +16,8 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const { market } = await params;
   if (!isSupportedMarket(market)) return {};
   return {
-    title: 'Promo codes and offers',
-    description: `Current mystery box promo codes and offers for the ${MARKET_LABELS[market]}.`,
+    title: 'Mystery box promo codes and offers',
+    description: `Current verified mystery box promo codes and welcome offers for the ${MARKET_LABELS[market]}.`,
     alternates: marketAlternates(market, '/promo-codes'),
   };
 }
@@ -29,7 +28,27 @@ export default async function PromoCodesPage({ params }: { params: Promise<Param
   const marketCode = market as MarketCode;
 
   const { geoChain } = await getRequestGeoContext();
-  const items = await getMarketPromoOffers(marketCode, geoChain);
+  const raw = await getMarketPromoOffers(marketCode, geoChain);
+  const now = new Date();
+
+  // Keep only usable offers (active, in-window) and map to a serializable shape.
+  const items: PromoItem[] = raw
+    .map(({ operator, offer }) => ({ operator, offer, state: offerState(offer, now) }))
+    .filter(({ state }) => state.usable)
+    .map(({ operator, offer, state }) => ({
+      offerId: offer.id,
+      operatorSlug: operator.slug,
+      operatorName: operator.name,
+      logoUrl: operator.logoUrl,
+      trackingUrl: operator.trackingUrl,
+      title: offer.title,
+      description: offer.description,
+      code: offer.code,
+      eligibility: offer.eligibility,
+      exclusive: offer.exclusive,
+      stale: state.freshness === 'stale',
+      lastCheckedLabel: formatReviewDate(state.lastCheckedISO),
+    }));
 
   return (
     <div className="space-y-8">
@@ -39,50 +58,28 @@ export default async function PromoCodesPage({ params }: { params: Promise<Param
           { name: 'Promo codes', path: marketPath(marketCode, '/promo-codes') },
         ]}
       />
-      <header className="space-y-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-ink">Promo codes and offers</h1>
-        <p className="text-muted">Current offers from the operators we cover. Terms apply.</p>
+
+      <header className="max-w-2xl space-y-3">
+        <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          Mystery box promo codes and offers
+        </h1>
+        <p className="text-lg text-muted">
+          Current welcome offers and promo codes from the mystery box platforms we cover in the{' '}
+          {MARKET_LABELS[marketCode]}. We check these regularly, but always confirm the terms on the
+          operator&apos;s site before you spend.
+        </p>
       </header>
 
       {items.length === 0 ? (
         <p className="text-muted">No live offers for your region right now.</p>
       ) : (
-        <div className="grid gap-4">
-          {items.map(({ operator, offer }) => (
-            <div key={offer.id} className="u-glass flex flex-col gap-3 rounded-xl p-5 sm:flex-row sm:items-center">
-              <div className="flex-1 space-y-1">
-                <Link href={reviewPath(marketCode, operator.slug)} className="font-bold text-ink hover:text-primary">
-                  {operator.name}
-                </Link>
-                <div className="text-sm font-semibold text-ink">{offer.title}</div>
-                {offer.description && <p className="text-sm text-muted">{offer.description}</p>}
-                {offer.terms && <p className="text-xs text-muted">{offer.terms}</p>}
-                <OperatorCompliance
-                  operatorType={operator.operatorType}
-                  market={marketCode}
-                  licenceAuthority={operator.licenceAuthority}
-                  licenceNumber={operator.licenceNumber}
-                />
-              </div>
-              <div className="flex flex-col items-stretch gap-2 sm:w-48">
-                {offer.code && (
-                  <div className="rounded-lg border border-dashed border-line bg-elevated px-3 py-2 text-center font-mono text-sm tracking-wider text-ink">
-                    {offer.code}
-                  </div>
-                )}
-                {operator.trackingUrl && (
-                  <OutboundLink
-                    href={operator.trackingUrl}
-                    className="u-btn-primary rounded-lg px-4 py-2.5 text-center text-sm font-bold"
-                  >
-                    Visit site
-                  </OutboundLink>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        <PromoList items={items} market={marketCode} />
       )}
+
+      <p className="border-t border-line pt-4 text-sm text-muted">
+        Affiliate disclosure. Some links on this page are affiliate links. If you sign up through
+        them we may earn a commission at no extra cost to you, which never affects our scores.
+      </p>
     </div>
   );
 }
