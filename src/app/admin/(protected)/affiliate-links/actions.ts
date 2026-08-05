@@ -3,11 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { adminDb } from '@/lib/admin/db';
+import { adminContext, adminContextWithRole } from '@/lib/admin/db';
+import { logAudit } from '@/lib/admin/audit';
 import { bool, slugify, str, strOrNull } from '@/lib/admin/form';
 
 export async function saveAffiliateLink(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContext();
   const id = str(formData, 'id');
   const label = str(formData, 'label').trim();
 
@@ -27,16 +28,24 @@ export async function saveAffiliateLink(formData: FormData) {
       : await db.from('affiliate_links').insert(values);
   if (error) throw new Error(error.message);
 
+  await logAudit(db, admin, {
+    action: id && id !== 'new' ? 'update' : 'create',
+    entity: 'affiliate_link',
+    entityId: id && id !== 'new' ? id : null,
+    summary: label || null,
+  });
+
   revalidatePath('/admin/affiliate-links');
   redirect('/admin/affiliate-links');
 }
 
 export async function deleteAffiliateLink(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContextWithRole(['admin']);
   const id = str(formData, 'id');
   if (id) {
     const { error } = await db.from('affiliate_links').delete().eq('id', id);
     if (error) throw new Error(error.message);
+    await logAudit(db, admin, { action: 'delete', entity: 'affiliate_link', entityId: id });
   }
   revalidatePath('/admin/affiliate-links');
 }

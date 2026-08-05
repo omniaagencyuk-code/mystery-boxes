@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { adminDb } from '@/lib/admin/db';
+import { adminContext, adminContextWithRole, adminDb } from '@/lib/admin/db';
+import { logAudit } from '@/lib/admin/audit';
 import { jsonRows, rowStr, slugify, str, strOrNull } from '@/lib/admin/form';
 
 /** Resolve a media picker: a chosen media id's URL wins over a pasted URL. */
@@ -22,7 +23,7 @@ async function resolveMediaUrl(
 }
 
 export async function saveCategory(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContext();
   const id = str(formData, 'id');
   const name = str(formData, 'name').trim();
   const slug = str(formData, 'slug').trim() || slugify(name);
@@ -87,16 +88,24 @@ export async function saveCategory(formData: FormData) {
     if (error) throw new Error(error.message);
   }
 
+  await logAudit(db, admin, {
+    action: id && id !== 'new' ? 'update' : 'create',
+    entity: 'category',
+    entityId: categoryId,
+    summary: name || null,
+  });
+
   revalidatePath('/admin/categories');
   redirect('/admin/categories');
 }
 
 export async function deleteCategory(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContextWithRole(['admin']);
   const id = str(formData, 'id');
   if (id) {
     const { error } = await db.from('categories').delete().eq('id', id);
     if (error) throw new Error(error.message);
+    await logAudit(db, admin, { action: 'delete', entity: 'category', entityId: id });
   }
   revalidatePath('/admin/categories');
 }

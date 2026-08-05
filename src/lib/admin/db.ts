@@ -1,7 +1,8 @@
 import 'server-only';
 
-import { getCurrentAdmin, requireAdminForAction } from '@/lib/admin/auth';
+import { getCurrentAdmin, requireAdminForAction, requireRoleForAction } from '@/lib/admin/auth';
 import { createAdminSupabase } from '@/lib/supabase/admin';
+import type { AdminRole } from '@/lib/supabase/types';
 
 /**
  * Secret-key client for server ACTIONS. Throws if the caller is not an admin, so
@@ -10,6 +11,24 @@ import { createAdminSupabase } from '@/lib/supabase/admin';
 export async function adminDb() {
   await requireAdminForAction();
   return createAdminSupabase();
+}
+
+/**
+ * Like adminDb, but also returns the verified admin (for audit logging). Use in
+ * actions that record who made the change.
+ */
+export async function adminContext() {
+  const admin = await requireAdminForAction();
+  return { db: createAdminSupabase(), admin };
+}
+
+/**
+ * adminContext restricted to specific roles. Throws if the caller's role is not
+ * allowed. Use for privileged actions such as deletes (admin only).
+ */
+export async function adminContextWithRole(allowed: readonly AdminRole[]) {
+  const admin = await requireRoleForAction(allowed);
+  return { db: createAdminSupabase(), admin };
 }
 
 /**

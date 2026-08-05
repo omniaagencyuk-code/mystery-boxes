@@ -6,6 +6,7 @@
 
 export type OperatorTypeSlug = 'physical_retail' | 'digital_unboxing';
 export type PublishStatus = 'draft' | 'published';
+export type AdminRole = 'admin' | 'editor' | 'reviewer';
 
 export type ReviewBlockType =
   | 'RICH_TEXT'
@@ -423,6 +424,7 @@ export interface Database {
           name: string | null;
           active: boolean;
           created_at: string;
+          role: AdminRole;
         };
         Insert: {
           id?: string;
@@ -431,8 +433,33 @@ export interface Database {
           name?: string | null;
           active?: boolean;
           created_at?: string;
+          role?: AdminRole;
         };
         Update: Partial<Database['public']['Tables']['admins']['Insert']>;
+        Relationships: [];
+      };
+      audit_log: {
+        Row: {
+          id: string;
+          admin_id: string | null;
+          admin_email: string | null;
+          action: string;
+          entity: string;
+          entity_id: string | null;
+          summary: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_id?: string | null;
+          admin_email?: string | null;
+          action: string;
+          entity: string;
+          entity_id?: string | null;
+          summary?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['audit_log']['Insert']>;
         Relationships: [];
       };
       media: {
@@ -609,3 +636,4 @@ export type AffiliateClickRow = Database['public']['Tables']['affiliate_clicks']
 export type CategoryShortcutRow = Database['public']['Tables']['category_shortcuts']['Row'];
 export type CategoryBrandRow = Database['public']['Tables']['category_brands']['Row'];
 export type CategoryFaqRow = Database['public']['Tables']['category_faqs']['Row'];
+export type AuditLogRow = Database['public']['Tables']['audit_log']['Row'];

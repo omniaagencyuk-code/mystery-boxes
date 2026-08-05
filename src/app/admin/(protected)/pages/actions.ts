@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { adminDb } from '@/lib/admin/db';
+import { adminContext, adminContextWithRole, adminDb } from '@/lib/admin/db';
+import { logAudit } from '@/lib/admin/audit';
 import { slugify, str, strOrNull } from '@/lib/admin/form';
 import type { PublishStatus } from '@/lib/supabase/types';
 
@@ -23,7 +24,7 @@ async function resolveMediaUrl(
 }
 
 export async function savePage(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContext();
   const id = str(formData, 'id');
   const title = str(formData, 'title').trim();
   const status: PublishStatus = str(formData, 'status') === 'published' ? 'published' : 'draft';
@@ -52,16 +53,24 @@ export async function savePage(formData: FormData) {
       : await db.from('pages').insert(values);
   if (error) throw new Error(error.message);
 
+  await logAudit(db, admin, {
+    action: id && id !== 'new' ? 'update' : 'create',
+    entity: 'page',
+    entityId: id && id !== 'new' ? id : null,
+    summary: title || null,
+  });
+
   revalidatePath('/admin/pages');
   redirect('/admin/pages');
 }
 
 export async function deletePage(formData: FormData) {
-  const db = await adminDb();
+  const { db, admin } = await adminContextWithRole(['admin']);
   const id = str(formData, 'id');
   if (id) {
     const { error } = await db.from('pages').delete().eq('id', id);
     if (error) throw new Error(error.message);
+    await logAudit(db, admin, { action: 'delete', entity: 'page', entityId: id });
   }
   revalidatePath('/admin/pages');
 }
