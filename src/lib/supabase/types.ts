@@ -186,6 +186,12 @@ export interface Database {
           name: string;
           description: string | null;
           market_id: string | null;
+          h1: string | null;
+          intro: string | null;
+          hero_image_url: string | null;
+          accent_color: string | null;
+          seo_title: string | null;
+          meta_description: string | null;
         };
         Insert: {
           id?: string;
@@ -193,8 +199,32 @@ export interface Database {
           name: string;
           description?: string | null;
           market_id?: string | null;
+          h1?: string | null;
+          intro?: string | null;
+          hero_image_url?: string | null;
+          accent_color?: string | null;
+          seo_title?: string | null;
+          meta_description?: string | null;
         };
         Update: Partial<Database['public']['Tables']['categories']['Insert']>;
+        Relationships: [];
+      };
+      category_shortcuts: {
+        Row: { id: string; category_id: string; label: string; target: string | null; position: number };
+        Insert: { id?: string; category_id: string; label: string; target?: string | null; position?: number };
+        Update: Partial<Database['public']['Tables']['category_shortcuts']['Insert']>;
+        Relationships: [];
+      };
+      category_brands: {
+        Row: { id: string; category_id: string; name: string; position: number };
+        Insert: { id?: string; category_id: string; name: string; position?: number };
+        Update: Partial<Database['public']['Tables']['category_brands']['Insert']>;
+        Relationships: [];
+      };
+      category_faqs: {
+        Row: { id: string; category_id: string; question: string; answer: string; position: number };
+        Insert: { id?: string; category_id: string; question: string; answer: string; position?: number };
+        Update: Partial<Database['public']['Tables']['category_faqs']['Insert']>;
         Relationships: [];
       };
       operator_categories: {
@@ -568,3 +598,6 @@ export type OperatorPaymentMethodRow =
   Database['public']['Tables']['operator_payment_methods']['Row'];
 export type OperatorRelatedRow = Database['public']['Tables']['operator_related']['Row'];
 export type AffiliateClickRow = Database['public']['Tables']['affiliate_clicks']['Row'];
+export type CategoryShortcutRow = Database['public']['Tables']['category_shortcuts']['Row'];
+export type CategoryBrandRow = Database['public']['Tables']['category_brands']['Row'];
+export type CategoryFaqRow = Database['public']['Tables']['category_faqs']['Row'];
