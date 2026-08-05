@@ -2,16 +2,30 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { Markdown } from '@/components/markdown';
-import { OperatorCompliance } from '@/components/compliance';
 import { JsonLd } from '@/components/json-ld';
-import { OutboundLink } from '@/components/outbound-link';
-import { Rating } from '@/components/rating';
-import { getActiveOffers, getPublishedReview } from '@/lib/data/content';
-import { getOperatorForReview } from '@/lib/data/operators';
+import { ReviewContentRenderer, type RenderContext } from '@/components/review/content-renderer';
+import { ReviewFaq } from '@/components/review/faq';
+import { ReviewFooterMeta } from '@/components/review/footer-meta';
+import { MobileStickyOffer } from '@/components/review/mobile-sticky-offer';
+import { PaymentMethodsPanel } from '@/components/review/payment-methods';
+import { SectionHeading, ReviewSection } from '@/components/review/primitives';
+import { ProsConsCta } from '@/components/review/pros-cons-cta';
+import { RelatedReviews } from '@/components/review/related-reviews';
+import { ReviewHero } from '@/components/review/review-hero';
+import { ReviewSectionNav, type SectionNavItem } from '@/components/review/section-nav';
+import { ReviewSummaryGrid } from '@/components/review/summary-grid';
+import { WelcomeOfferBanner } from '@/components/review/welcome-offer-banner';
+import { getReviewPageData } from '@/lib/data/review-page';
 import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { getRequestGeoContext } from '@/lib/request-context';
-import { marketAlternates, operatorReviewJsonLd } from '@/lib/seo';
+import type { CtaSources } from '@/lib/reviews/affiliate';
+import { buildQuickFacts } from '@/lib/reviews/quick-facts';
+import {
+  absoluteUrl,
+  faqJsonLd,
+  marketAlternates,
+  platformReviewJsonLd,
+} from '@/lib/seo';
 
 type Params = { market: string; operator: string };
 
@@ -22,21 +36,35 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { market, operator } = await params;
   if (!isSupportedMarket(market)) return {};
+  const marketCode = market as MarketCode;
 
-  // Empty geo chain: metadata does not depend on the visitor. The page itself
-  // enforces the geo block and 404s when needed.
-  const found = await getOperatorForReview(market, operator, []);
-  const alternates = marketAlternates(market, `/reviews/${operator}`);
-  if (!found) return { alternates };
+  // Metadata does not depend on the visitor; the page itself enforces geo-block.
+  const data = await getReviewPageData(marketCode, operator, []);
+  const alternates = marketAlternates(marketCode, `/reviews/${operator}`);
+  if (!data) return { alternates };
 
-  const review = await getPublishedReview(found.id, found.marketId);
+  const { platform, review } = data;
+  const title = review.seoTitle?.trim() || `${platform.name} Review`;
   const description =
-    review?.verdict || found.operator.summary || `Our review of ${found.operator.name}.`;
+    review.metaDescription?.trim() ||
+    review.verdict ||
+    platform.summary ||
+    `Our independent review of ${platform.name}.`;
+  const ogImage = review.ogImageUrl || platform.heroImageUrl || undefined;
+
+  if (review.canonicalUrl) alternates.canonical = review.canonicalUrl;
 
   return {
-    title: `${found.operator.name} review`,
+    title,
     description,
     alternates,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      url: (alternates.canonical as string) ?? absoluteUrl(marketPath(marketCode, `/reviews/${operator}`)),
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
+    },
   };
 }
 
@@ -50,119 +78,146 @@ export default async function OperatorReviewPage({
   const marketCode = market as MarketCode;
 
   const { geoChain } = await getRequestGeoContext();
-  const found = await getOperatorForReview(marketCode, operator, geoChain);
-  if (!found) notFound();
+  const data = await getReviewPageData(marketCode, operator, geoChain);
+  if (!data) notFound();
 
-  const { operator: op, id, marketId } = found;
-  const [review, offers] = await Promise.all([
-    getPublishedReview(id, marketId),
-    getActiveOffers(id),
-  ]);
+  const { platform, review, offer, payments, related, affiliateSlug } = data;
+  const pagePath = marketPath(marketCode, `/reviews/${platform.slug}`);
+  const canonicalPath = review.canonicalUrl ?? pagePath;
 
-  const canonicalPath = marketPath(marketCode, `/reviews/${op.slug}`);
+  const sources: CtaSources = {
+    affiliateSlug,
+    trackingUrl: platform.trackingUrl,
+    websiteUrl: platform.websiteUrl,
+  };
+
+  const facts = buildQuickFacts({
+    operatorType: platform.operatorType,
+    foundedYear: platform.foundedYear,
+    owner: platform.owner,
+    minAge: platform.minAge,
+    availability: platform.availability,
+    licenceAuthority: platform.licenceAuthority,
+    licenceNumber: platform.licenceNumber,
+    buyback: platform.buyback,
+    kycRequired: platform.kycRequired,
+    shippingInfo: platform.shippingInfo,
+    mobileApp: platform.mobileApp,
+  });
+
+  const hasPros = platform.pros.length > 0;
+  const hasCons = platform.cons.length > 0;
+  const hasEditorial = Boolean(review.body?.trim()) || review.blocks.length > 0;
+  const hasPaymentBlock = review.blocks.some((b) => b.type === 'PAYMENT_PANEL');
+  const showPaymentsSection = payments.length > 0 && !hasPaymentBlock;
+
+  const navItems: SectionNavItem[] = [{ id: 'overview', label: 'Overview' }];
+  if (hasPros || hasCons) navItems.push({ id: 'pros-cons', label: 'Pros & Cons' });
+  if (hasEditorial) navItems.push({ id: 'review', label: 'Full Review' });
+  if (showPaymentsSection) navItems.push({ id: 'payments', label: 'Payments' });
+  if (review.faqs.length > 0) navItems.push({ id: 'faq', label: 'FAQ' });
+
+  const renderContext: RenderContext = { platform, payments, sources, page: pagePath };
+  const ctaLabel = offer?.state.usable ? offer.ctaLabel?.trim() || 'Claim Offer' : 'Visit Site';
 
   return (
-    <div className="space-y-8">
+    <div className="review-root relative left-1/2 w-screen -translate-x-1/2 -mt-8 min-h-screen md:-mt-12 -mb-8 md:-mb-12">
       <JsonLd
-        data={operatorReviewJsonLd({
-          operatorName: op.name,
+        data={platformReviewJsonLd({
+          platformName: platform.name,
           canonicalPath,
-          rating: op.rating,
-          reviewBody: review?.body ?? null,
-          verdict: review?.verdict ?? null,
-          author: review?.author ?? null,
-          datePublished: review?.published_at ?? null,
+          score: review.overallScore,
+          headline: review.verdict,
+          reviewBody: review.body,
+          author: review.author,
+          reviewer: review.reviewer,
+          datePublished: review.publishedAt,
+          dateModified: review.updatedAt,
         })}
       />
+      {review.faqs.length > 0 && <JsonLd data={faqJsonLd(review.faqs)} />}
 
-      <Breadcrumbs
-        items={[
-          { name: MARKET_LABELS[marketCode], path: marketPath(marketCode) },
-          { name: 'Reviews', path: marketPath(marketCode) },
-          { name: op.name, path: canonicalPath },
-        ]}
-      />
-
-      <header className="u-glass space-y-3 rounded-xl p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-3xl font-extrabold tracking-tight text-ink">{op.name} review</h1>
-          <Rating value={op.rating} />
+      <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+        <div className="mb-5">
+          <Breadcrumbs
+            items={[
+              { name: MARKET_LABELS[marketCode], path: marketPath(marketCode) },
+              { name: 'Reviews', path: marketPath(marketCode, '/reviews') },
+              { name: `${platform.name} Review`, path: pagePath },
+            ]}
+          />
         </div>
-        {op.summary && <p className="text-muted">{op.summary}</p>}
-        <OperatorCompliance
-          operatorType={op.operatorType}
-          market={marketCode}
-          licenceAuthority={op.licenceAuthority}
-          licenceNumber={op.licenceNumber}
-          density="block"
-        />
-        {op.trackingUrl && (
-          <OutboundLink
-            href={op.trackingUrl}
-            className="u-btn-primary inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-bold"
-          >
-            Visit {op.name}
-          </OutboundLink>
-        )}
-      </header>
 
-      {(op.pros.length > 0 || op.cons.length > 0) && (
-        <section className="grid gap-6 sm:grid-cols-2">
-          {op.pros.length > 0 && (
-            <div>
-              <h2 className="text-lg font-bold text-success">What we like</h2>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-muted">
-                {op.pros.map((pro, i) => (
-                  <li key={i}>{pro}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {op.cons.length > 0 && (
-            <div>
-              <h2 className="text-lg font-bold text-danger">What to watch</h2>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-muted">
-                {op.cons.map((con, i) => (
-                  <li key={i}>{con}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
-      )}
+        <div className="space-y-6">
+          {/* Hero */}
+          <ReviewHero platform={platform} review={review} verified={Boolean(review.lastCheckedAt)} />
 
-      {offers.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-xl font-bold text-ink">Current offers</h2>
-          <ul className="space-y-3">
-            {offers.map((offer) => (
-              <li key={offer.id} className="u-glass rounded-xl p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-ink">{offer.title}</span>
-                  {offer.code && (
-                    <code className="rounded bg-elevated px-2 py-1 text-xs text-ink">
-                      {offer.code}
-                    </code>
-                  )}
-                </div>
-                {offer.description && <p className="mt-1 text-sm text-muted">{offer.description}</p>}
-                {offer.terms && <p className="mt-2 text-xs text-muted">{offer.terms}</p>}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+          {/* Welcome offer */}
+          <WelcomeOfferBanner platform={platform} offer={offer} sources={sources} page={pagePath} />
 
-      {review?.body && (
-        <section className="space-y-3">
-          <h2 className="text-xl font-bold text-ink">Our review</h2>
-          <Markdown>{review.body}</Markdown>
-          {review.verdict && (
-            <p className="border-l-4 border-primary pl-3 font-semibold text-ink">{review.verdict}</p>
+          {/* Sticky section nav */}
+          <ReviewSectionNav items={navItems} />
+
+          {/* Overview: summary grid */}
+          <ReviewSection id="overview" className="pt-2">
+            <ReviewSummaryGrid review={review} facts={facts} payments={payments} />
+          </ReviewSection>
+
+          {/* Pros, cons and commercial CTA */}
+          {(hasPros || hasCons) && (
+            <ReviewSection id="pros-cons">
+              <ProsConsCta platform={platform} sources={sources} page={pagePath} />
+            </ReviewSection>
           )}
-          {review.author && <p className="text-sm text-muted">By {review.author}</p>}
-        </section>
-      )}
+
+          {/* Main editorial review */}
+          {hasEditorial && (
+            <ReviewSection id="review" className="pt-4">
+              <div className="mb-6">
+                <SectionHeading>{platform.name} Full Review</SectionHeading>
+              </div>
+              <ReviewContentRenderer
+                leadMarkdown={review.body}
+                blocks={review.blocks}
+                context={renderContext}
+              />
+            </ReviewSection>
+          )}
+
+          {/* Standalone payments section (when not already a content block) */}
+          {showPaymentsSection && (
+            <ReviewSection id="payments" className="space-y-4 pt-4">
+              <SectionHeading>Payments and withdrawals</SectionHeading>
+              <PaymentMethodsPanel methods={payments} />
+            </ReviewSection>
+          )}
+
+          {/* FAQ */}
+          {review.faqs.length > 0 && (
+            <ReviewSection id="faq" className="pt-4">
+              <ReviewFaq items={review.faqs} />
+            </ReviewSection>
+          )}
+
+          {/* Related reviews */}
+          {related.length > 0 && (
+            <section className="pt-4">
+              <RelatedReviews related={related} market={marketCode} />
+            </section>
+          )}
+
+          {/* Provenance and disclosures */}
+          <ReviewFooterMeta review={review} market={marketCode} />
+        </div>
+      </div>
+
+      {/* Mobile sticky offer */}
+      <MobileStickyOffer
+        sources={sources}
+        ctaLabel={ctaLabel}
+        platformName={platform.name}
+        page={pagePath}
+      />
     </div>
   );
 }

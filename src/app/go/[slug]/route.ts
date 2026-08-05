@@ -7,7 +7,7 @@ import { createPublicSupabase } from '@/lib/supabase/public';
 // the index by robots. Dynamic so every hit resolves the current target.
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const supabase = createPublicSupabase();
 
@@ -20,11 +20,18 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
 
   if (!data) {
     // Send unknown or inactive links to the homepage rather than expose a 404.
-    return NextResponse.redirect(new URL('/', _request.url), { status: 302 });
+    return NextResponse.redirect(new URL('/', request.url), { status: 302 });
   }
 
-  // Best-effort click count; never block the redirect on it.
-  await supabase.rpc('increment_affiliate_click', { link_slug: slug });
+  // Record the click with its context (placement, CTA label, originating page)
+  // and bump the counter. Best-effort; never block the redirect on it.
+  const url = new URL(request.url);
+  await supabase.rpc('record_affiliate_click', {
+    link_slug: slug,
+    placement: url.searchParams.get('p'),
+    cta_label: url.searchParams.get('l'),
+    page_path: url.searchParams.get('pg'),
+  });
 
   return NextResponse.redirect(data.target_url, { status: 302 });
 }

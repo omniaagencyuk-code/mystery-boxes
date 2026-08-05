@@ -122,3 +122,54 @@ export function operatorReviewJsonLd(params: {
     ...(params.datePublished ? { datePublished: params.datePublished } : {}),
   };
 }
+
+/**
+ * Review structured data for the platform review template. Emits our own
+ * editorial rating as `reviewRating` only. It deliberately omits AggregateRating
+ * and any review count, because we hold no user reviews and must not fabricate
+ * aggregate rating data.
+ */
+export function platformReviewJsonLd(params: {
+  platformName: string;
+  canonicalPath: string;
+  score: number | null;
+  headline: string | null;
+  reviewBody: string | null;
+  author: string | null;
+  reviewer: string | null;
+  datePublished: string | null;
+  dateModified: string | null;
+}) {
+  const url = absoluteUrl(params.canonicalPath);
+  const reviewRating =
+    params.score != null
+      ? { '@type': 'Rating', ratingValue: params.score, bestRating: 5, worstRating: 1 }
+      : undefined;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Review',
+    itemReviewed: { '@type': 'Organization', name: params.platformName, url },
+    ...(reviewRating ? { reviewRating } : {}),
+    author: { '@type': 'Organization', name: params.author || 'Editorial team' },
+    ...(params.reviewer ? { reviewedBy: { '@type': 'Person', name: params.reviewer } } : {}),
+    publisher: { '@type': 'Organization', name: 'Mystery Boxes' },
+    ...(params.headline ? { name: params.headline } : {}),
+    ...(params.reviewBody ? { reviewBody: params.reviewBody } : {}),
+    ...(params.datePublished ? { datePublished: params.datePublished } : {}),
+    ...(params.dateModified ? { dateModified: params.dateModified } : {}),
+  };
+}
+
+/** FAQPage structured data from real question/answer pairs. */
+export function faqJsonLd(items: { question: string; answer: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer },
+    })),
+  };
+}

@@ -7,6 +7,23 @@
 export type OperatorTypeSlug = 'physical_retail' | 'digital_unboxing';
 export type PublishStatus = 'draft' | 'published';
 
+export type ReviewBlockType =
+  | 'RICH_TEXT'
+  | 'IMAGE_LEFT'
+  | 'IMAGE_RIGHT'
+  | 'FULL_WIDTH_IMAGE'
+  | 'SCREENSHOT_GALLERY'
+  | 'FEATURE_GRID'
+  | 'OFFER_CALLOUT'
+  | 'PAYMENT_PANEL'
+  | 'SHIPPING_PANEL'
+  | 'SAFETY_PANEL'
+  | 'DATA_TABLE'
+  | 'QUOTE'
+  | 'RELATED_GUIDES'
+  | 'COMPARISON'
+  | 'CTA';
+
 export type Json =
   | string
   | number
@@ -62,6 +79,19 @@ export interface Database {
           active: boolean;
           created_at: string;
           updated_at: string;
+          website_url: string | null;
+          logo_light_url: string | null;
+          logo_dark_url: string | null;
+          hero_image_url: string | null;
+          founded_year: number | null;
+          owner: string | null;
+          min_age: string | null;
+          availability: string | null;
+          kyc_required: string | null;
+          buyback: string | null;
+          mobile_app: string | null;
+          shipping_info: string | null;
+          support_info: string | null;
         };
         Insert: {
           id?: string;
@@ -80,6 +110,19 @@ export interface Database {
           active?: boolean;
           created_at?: string;
           updated_at?: string;
+          website_url?: string | null;
+          logo_light_url?: string | null;
+          logo_dark_url?: string | null;
+          hero_image_url?: string | null;
+          founded_year?: number | null;
+          owner?: string | null;
+          min_age?: string | null;
+          availability?: string | null;
+          kyc_required?: string | null;
+          buyback?: string | null;
+          mobile_app?: string | null;
+          shipping_info?: string | null;
+          support_info?: string | null;
         };
         Update: Partial<Database['public']['Tables']['operators']['Insert']>;
         Relationships: [];
@@ -111,6 +154,11 @@ export interface Database {
           starts_at: string | null;
           expires_at: string | null;
           active: boolean;
+          cta_label: string | null;
+          exclusive: boolean;
+          eligibility: string | null;
+          terms_url: string | null;
+          last_verified_at: string | null;
         };
         Insert: {
           id?: string;
@@ -122,6 +170,11 @@ export interface Database {
           starts_at?: string | null;
           expires_at?: string | null;
           active?: boolean;
+          cta_label?: string | null;
+          exclusive?: boolean;
+          eligibility?: string | null;
+          terms_url?: string | null;
+          last_verified_at?: string | null;
         };
         Update: Partial<Database['public']['Tables']['offers']['Insert']>;
         Relationships: [];
@@ -161,6 +214,17 @@ export interface Database {
           published_at: string | null;
           updated_at: string;
           status: PublishStatus;
+          seo_title: string | null;
+          meta_description: string | null;
+          canonical_url: string | null;
+          og_image_url: string | null;
+          best_for_title: string | null;
+          best_for_description: string | null;
+          overall_score: number | null;
+          score_descriptor: string | null;
+          reviewer: string | null;
+          last_checked_at: string | null;
+          next_review_at: string | null;
         };
         Insert: {
           id?: string;
@@ -172,8 +236,119 @@ export interface Database {
           published_at?: string | null;
           updated_at?: string;
           status?: PublishStatus;
+          seo_title?: string | null;
+          meta_description?: string | null;
+          canonical_url?: string | null;
+          og_image_url?: string | null;
+          best_for_title?: string | null;
+          best_for_description?: string | null;
+          overall_score?: number | null;
+          score_descriptor?: string | null;
+          reviewer?: string | null;
+          last_checked_at?: string | null;
+          next_review_at?: string | null;
         };
         Update: Partial<Database['public']['Tables']['reviews']['Insert']>;
+        Relationships: [];
+      };
+      review_ratings: {
+        Row: { id: string; review_id: string; label: string; score: number; position: number };
+        Insert: { id?: string; review_id: string; label: string; score: number; position?: number };
+        Update: Partial<Database['public']['Tables']['review_ratings']['Insert']>;
+        Relationships: [];
+      };
+      review_faqs: {
+        Row: { id: string; review_id: string; question: string; answer: string; position: number };
+        Insert: { id?: string; review_id: string; question: string; answer: string; position?: number };
+        Update: Partial<Database['public']['Tables']['review_faqs']['Insert']>;
+        Relationships: [];
+      };
+      review_blocks: {
+        Row: {
+          id: string;
+          review_id: string;
+          block_type: ReviewBlockType;
+          position: number;
+          heading: string | null;
+          body: string | null;
+          media_id: string | null;
+          media_url: string | null;
+          alt: string | null;
+          caption: string | null;
+          cta_label: string | null;
+          cta_url: string | null;
+          config: Json;
+          visible: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          review_id: string;
+          block_type: ReviewBlockType;
+          position?: number;
+          heading?: string | null;
+          body?: string | null;
+          media_id?: string | null;
+          media_url?: string | null;
+          alt?: string | null;
+          caption?: string | null;
+          cta_label?: string | null;
+          cta_url?: string | null;
+          config?: Json;
+          visible?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['review_blocks']['Insert']>;
+        Relationships: [];
+      };
+      operator_payment_methods: {
+        Row: {
+          id: string;
+          operator_id: string;
+          slug: string | null;
+          name: string;
+          kind: 'deposit' | 'withdrawal' | 'both';
+          position: number;
+        };
+        Insert: {
+          id?: string;
+          operator_id: string;
+          slug?: string | null;
+          name: string;
+          kind?: 'deposit' | 'withdrawal' | 'both';
+          position?: number;
+        };
+        Update: Partial<Database['public']['Tables']['operator_payment_methods']['Insert']>;
+        Relationships: [];
+      };
+      operator_related: {
+        Row: { operator_id: string; related_operator_id: string; position: number };
+        Insert: { operator_id: string; related_operator_id: string; position?: number };
+        Update: Partial<Database['public']['Tables']['operator_related']['Insert']>;
+        Relationships: [];
+      };
+      affiliate_clicks: {
+        Row: {
+          id: string;
+          link_slug: string;
+          operator_id: string | null;
+          placement: string | null;
+          cta_label: string | null;
+          page_path: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          link_slug: string;
+          operator_id?: string | null;
+          placement?: string | null;
+          cta_label?: string | null;
+          page_path?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['affiliate_clicks']['Insert']>;
         Relationships: [];
       };
       pages: {
@@ -357,6 +532,15 @@ export interface Database {
         Args: { link_slug: string };
         Returns: undefined;
       };
+      record_affiliate_click: {
+        Args: {
+          link_slug: string;
+          placement?: string | null;
+          cta_label?: string | null;
+          page_path?: string | null;
+        };
+        Returns: undefined;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -377,3 +561,10 @@ export type MediaRow = Database['public']['Tables']['media']['Row'];
 export type PostRow = Database['public']['Tables']['posts']['Row'];
 export type AffiliateLinkRow = Database['public']['Tables']['affiliate_links']['Row'];
 export type MenuItemRow = Database['public']['Tables']['menu_items']['Row'];
+export type ReviewRatingRow = Database['public']['Tables']['review_ratings']['Row'];
+export type ReviewFaqRow = Database['public']['Tables']['review_faqs']['Row'];
+export type ReviewBlockRow = Database['public']['Tables']['review_blocks']['Row'];
+export type OperatorPaymentMethodRow =
+  Database['public']['Tables']['operator_payment_methods']['Row'];
+export type OperatorRelatedRow = Database['public']['Tables']['operator_related']['Row'];
+export type AffiliateClickRow = Database['public']['Tables']['affiliate_clicks']['Row'];
