@@ -101,6 +101,9 @@ body {
   background-color: var(--base);
   color: var(--ink);
   font-family: var(--font-sans);
+  /* clip (not hidden) stops full-bleed sections causing horizontal scroll while
+     keeping position: sticky working for the review section nav. */
+  overflow-x: clip;
 }
 
 /* Subtle brand glow in the dark theme so large surfaces are not flat black. */
@@ -131,5 +134,105 @@ body {
   }
   .u-btn-primary:hover {
     box-shadow: 0 0 20px color-mix(in srgb, var(--grad-from) 40%, transparent);
+  }
+}
+
+/*
+  ---------------------------------------------------------------------------
+  Review template design system
+  ---------------------------------------------------------------------------
+  A self-contained dark-navy palette scoped to the platform review page. Applied
+  via `.review-root`, so it never affects other page types. The review page is
+  always dark regardless of the site theme, matching the visual reference.
+*/
+.review-root {
+  --rv-bg: #030817;
+  --rv-bg-2: #071126;
+  --rv-elevated: #0b1730;
+  --rv-card: #0d1933;
+  --rv-nested: #091328;
+
+  --rv-border: rgba(130, 155, 210, 0.16);
+  --rv-border-strong: rgba(69, 130, 255, 0.38);
+  --rv-border-purple: rgba(132, 83, 255, 0.38);
+  --rv-border-green: rgba(46, 213, 115, 0.38);
+  --rv-border-gold: rgba(255, 193, 7, 0.34);
+
+  --rv-blue: #2684ff;
+  --rv-cta: #1677ff;
+  --rv-purple: #8157ff;
+  --rv-cyan: #19c7ff;
+  --rv-verified: #23d567;
+  --rv-offer: #27c968;
+  --rv-gold: #ffc107;
+  --rv-warn: #ff9f43;
+  --rv-error: #ff5a65;
+
+  --rv-text: #f6f8ff;
+  --rv-text-2: #a8b2cc;
+  --rv-muted: #75819b;
+
+  color: var(--rv-text);
+  background-color: var(--rv-bg);
+  background-image:
+    radial-gradient(1200px 600px at 82% -6%, rgba(132, 83, 255, 0.16), transparent),
+    radial-gradient(900px 520px at 6% 2%, rgba(38, 132, 255, 0.12), transparent);
+}
+
+@layer components {
+  .rv-card {
+    background: var(--rv-card);
+    border: 1px solid var(--rv-border);
+    border-radius: 16px;
+  }
+  .rv-panel {
+    background: var(--rv-elevated);
+    border: 1px solid var(--rv-border);
+    border-radius: 16px;
+  }
+  .rv-nested {
+    background: var(--rv-nested);
+    border: 1px solid var(--rv-border);
+    border-radius: 12px;
+  }
+  .rv-chip {
+    background: var(--rv-nested);
+    border: 1px solid var(--rv-border);
+    border-radius: 10px;
+    color: var(--rv-text-2);
+  }
+  /* Green commercial offer CTA. */
+  .rv-btn-offer {
+    background: var(--rv-offer);
+    color: #04120a;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: filter 0.15s ease, box-shadow 0.15s ease;
+  }
+  .rv-btn-offer:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 0 22px rgba(39, 201, 104, 0.32);
+  }
+  /* Blue internal / informational CTA. */
+  .rv-btn-blue {
+    background: var(--rv-cta);
+    color: #ffffff;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: filter 0.15s ease;
+  }
+  .rv-btn-blue:hover {
+    filter: brightness(1.08);
+  }
+  /* Focus ring shared by interactive review controls, for keyboard users. */
+  .rv-focus:focus-visible {
+    outline: 2px solid var(--rv-blue);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-root * {
+    scroll-behavior: auto !important;
   }
 }

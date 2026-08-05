@@ -4,7 +4,33 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 import { adminDb } from '@/lib/admin/db';
-import { bool, lines, numOrNull, str, strList, strOrNull, slugify, timestampOrNull } from '@/lib/admin/form';
+import {
+  bool,
+  jsonRows,
+  lines,
+  numOrNull,
+  rowStr,
+  slugify,
+  str,
+  strList,
+  strOrNull,
+  timestampOrNull,
+} from '@/lib/admin/form';
+
+/** Resolve a media picker: a chosen media id's URL wins over a pasted URL. */
+async function resolveMediaUrl(
+  db: Awaited<ReturnType<typeof adminDb>>,
+  formData: FormData,
+  urlKey: string,
+): Promise<string | null> {
+  let url = strOrNull(formData, urlKey);
+  const mediaId = strOrNull(formData, `${urlKey.replace(/_url$/, '')}_media_id`);
+  if (mediaId) {
+    const { data: media } = await db.from('media').select('url').eq('id', mediaId).maybeSingle();
+    if (media?.url) url = media.url;
+  }
+  return url;
+}
 
 export async function saveOperator(formData: FormData) {
   const db = await adminDb();
@@ -20,6 +46,12 @@ export async function saveOperator(formData: FormData) {
     if (media?.url) logoUrl = media.url;
   }
 
+  const [heroImageUrl, logoLightUrl, logoDarkUrl] = await Promise.all([
+    resolveMediaUrl(db, formData, 'hero_image_url'),
+    resolveMediaUrl(db, formData, 'logo_light_url'),
+    resolveMediaUrl(db, formData, 'logo_dark_url'),
+  ]);
+
   const values = {
     slug: str(formData, 'slug').trim() || slugify(name),
     name,
@@ -34,6 +66,21 @@ export async function saveOperator(formData: FormData) {
     pros: lines(formData, 'pros'),
     cons: lines(formData, 'cons'),
     active: bool(formData, 'active'),
+    // Platform details.
+    website_url: strOrNull(formData, 'website_url'),
+    founded_year: numOrNull(formData, 'founded_year'),
+    owner: strOrNull(formData, 'owner'),
+    min_age: strOrNull(formData, 'min_age'),
+    availability: strOrNull(formData, 'availability'),
+    kyc_required: strOrNull(formData, 'kyc_required'),
+    buyback: strOrNull(formData, 'buyback'),
+    mobile_app: strOrNull(formData, 'mobile_app'),
+    shipping_info: strOrNull(formData, 'shipping_info'),
+    support_info: strOrNull(formData, 'support_info'),
+    // Media.
+    hero_image_url: heroImageUrl,
+    logo_light_url: logoLightUrl,
+    logo_dark_url: logoDarkUrl,
   };
 
   // Upsert the operator and get its id.
@@ -78,6 +125,46 @@ export async function saveOperator(formData: FormData) {
     const { error } = await db
       .from('operator_categories')
       .insert(categoryIds.map((cid) => ({ operator_id: operatorId, category_id: cid })));
+    if (error) throw new Error(error.message);
+  }
+
+  // Payment methods: replace-all. Only rows with a name are kept; position is
+  // the row order. kind is constrained to the allowed union.
+  const kinds = new Set(['deposit', 'withdrawal', 'both']);
+  const paymentRows = jsonRows(formData, 'payment_methods_json')
+    .map((r, i) => {
+      const rawKind = rowStr(r, 'kind');
+      return {
+        operator_id: operatorId,
+        name: rowStr(r, 'name'),
+        slug: rowStr(r, 'slug') || null,
+        kind: (kinds.has(rawKind) ? rawKind : 'both') as 'deposit' | 'withdrawal' | 'both',
+        position: i,
+      };
+    })
+    .filter((r) => r.name.length > 0)
+    .map((r, i) => ({ ...r, position: i }));
+  await db.from('operator_payment_methods').delete().eq('operator_id', operatorId);
+  if (paymentRows.length > 0) {
+    const { error } = await db.from('operator_payment_methods').insert(paymentRows);
+    if (error) throw new Error(error.message);
+  }
+
+  // Related platforms: replace-all. Order of selection is the position; self and
+  // duplicates are dropped.
+  const relatedIds: string[] = [];
+  for (const rid of strList(formData, 'related_ids')) {
+    if (rid && rid !== operatorId && !relatedIds.includes(rid)) relatedIds.push(rid);
+  }
+  await db.from('operator_related').delete().eq('operator_id', operatorId);
+  if (relatedIds.length > 0) {
+    const { error } = await db.from('operator_related').insert(
+      relatedIds.map((rid, i) => ({
+        operator_id: operatorId,
+        related_operator_id: rid,
+        position: i,
+      })),
+    );
     if (error) throw new Error(error.message);
   }
 
