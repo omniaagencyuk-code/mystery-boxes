@@ -151,20 +151,31 @@ export const getMarketPromoOffers = cache(
  * prefixed `guides/`, so they live at /guides/<slug> and stay out of the root
  * `/[slug]` namespace.
  */
+export interface GuideCard {
+  slug: string;
+  title: string;
+  meta_description: string | null;
+  summary: string | null;
+  guide_category: string | null;
+  hero_image_url: string | null;
+  author: string | null;
+  published_at: string | null;
+  body: string | null;
+}
+
 export const getGuidesForMarket = cache(
-  async (
-    marketCode: MarketCode,
-  ): Promise<{ slug: string; title: string; meta_description: string | null }[]> => {
+  async (marketCode: MarketCode): Promise<GuideCard[]> => {
     const market = await getMarketByCode(marketCode);
     if (!market) return [];
 
     const supabase = await createServerSupabase();
     const { data } = await supabase
       .from('pages')
-      .select('slug, title, meta_description')
+      .select('slug, title, meta_description, summary, guide_category, hero_image_url, author, published_at, body')
       .eq('market_id', market.id)
       .eq('status', 'published')
       .like('slug', 'guides/%')
+      .order('published_at', { ascending: false, nullsFirst: false })
       .order('title');
     return data ?? [];
   },

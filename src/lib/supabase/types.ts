@@ -392,6 +392,10 @@ export interface Database {
           status: PublishStatus;
           published_at: string | null;
           updated_at: string;
+          guide_category: string | null;
+          author: string | null;
+          hero_image_url: string | null;
+          summary: string | null;
         };
         Insert: {
           id?: string;
@@ -403,6 +407,10 @@ export interface Database {
           status?: PublishStatus;
           published_at?: string | null;
           updated_at?: string;
+          guide_category?: string | null;
+          author?: string | null;
+          hero_image_url?: string | null;
+          summary?: string | null;
         };
         Update: Partial<Database['public']['Tables']['pages']['Insert']>;
         Relationships: [];
