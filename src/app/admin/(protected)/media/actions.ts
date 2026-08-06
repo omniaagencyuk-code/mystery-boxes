@@ -1,5 +1,7 @@
 'use server';
 
+import { randomUUID } from 'node:crypto';
+
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -42,12 +44,19 @@ export async function uploadMedia(formData: FormData) {
     uploadError('Unsupported file type. Upload a PNG, JPEG, WebP, GIF or AVIF image.');
   }
 
-  const path = `${crypto.randomUUID()}.${ext}`;
+  const path = `${randomUUID()}.${ext}`;
 
   const { error: storageError } = await db.storage
     .from(BUCKET)
     .upload(path, file, { contentType: file.type, upsert: false });
-  if (storageError) uploadError(storageError.message);
+  if (storageError) {
+    // The most common cause is the storage bucket not existing yet, so point the
+    // admin at the one-time setup rather than showing a raw driver message.
+    const hint = /bucket|not found|does not exist/i.test(storageError.message)
+      ? ' The media storage bucket may be missing. Run supabase/storage-setup.sql once in the Supabase SQL editor.'
+      : '';
+    uploadError(`Upload failed: ${storageError.message}.${hint}`);
+  }
 
   const { data: pub } = db.storage.from(BUCKET).getPublicUrl(path);
 
@@ -60,7 +69,11 @@ export async function uploadMedia(formData: FormData) {
     mime_type: file.type || null,
     size_bytes: file.size,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Roll back the stored object so a failed record does not orphan a file.
+    await db.storage.from(BUCKET).remove([path]);
+    uploadError(`Could not save the media record: ${error.message}`);
+  }
 
   await logAudit(db, admin, {
     action: 'create',
