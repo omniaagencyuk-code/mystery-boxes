@@ -149,6 +149,25 @@ export async function saveHomepage(formData: FormData) {
     if (error) throw new Error(error.message);
   }
 
+  // Homepage table order: the drag-and-drop control posts an ordered array of
+  // operator ids. Write the position back to each operator (shared record), so
+  // the homepage comparison table reflects the new order.
+  const orderIds = (() => {
+    try {
+      const parsed: unknown = JSON.parse(str(formData, 'homepage_order_json') || '[]');
+      return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+    } catch {
+      return [];
+    }
+  })();
+  for (let i = 0; i < orderIds.length; i += 1) {
+    const { error } = await db
+      .from('operators')
+      .update({ homepage_position: (i + 1) * 10 })
+      .eq('id', orderIds[i]);
+    if (error) throw new Error(error.message);
+  }
+
   await logAudit(db, admin, { action: 'update', entity: 'homepage', entityId: market_id });
 
   revalidatePath('/admin/homepage');

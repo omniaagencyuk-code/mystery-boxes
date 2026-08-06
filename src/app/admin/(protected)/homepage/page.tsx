@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { saveHomepage } from './actions';
+import { HomepageOrder } from '@/components/admin/homepage-order';
 import { MarkdownEditor } from '@/components/admin/markdown-editor';
 import { Repeater } from '@/components/admin/repeater';
 import { Field, inputCls, PageHeader, SubmitRow } from '@/components/admin/ui';
@@ -171,10 +172,20 @@ export default async function HomepageEditorPage({
     db.from('operators').select('id, name, slug').eq('active', true).order('name'),
   ]);
 
+  const { data: homepageOrderRows } = await db
+    .from('operators')
+    .select('id, name')
+    .eq('active', true)
+    .eq('homepage_visible', true)
+    .order('homepage_position', { ascending: true, nullsFirst: false })
+    .order('rating', { ascending: false, nullsFirst: false })
+    .order('name');
+
   const operatorOptions = [
     { value: '', label: 'No platform' },
     ...(operatorRows ?? []).map((o) => ({ value: o.id, label: o.name })),
   ];
+  const homepageOrder = (homepageOrderRows ?? []).map((o) => ({ id: o.id, name: o.name }));
   const articleInitial = (articleRows ?? []).map((b) => ({
     block_type: b.block_type,
     badge: b.badge ?? '',
@@ -344,6 +355,16 @@ export default async function HomepageEditorPage({
               { key: 'visible', label: 'Visible', type: 'checkbox' },
             ]}
           />
+        </fieldset>
+
+        <fieldset className="u-glass rounded-lg p-4">
+          <legend className="px-1 text-sm font-medium">Homepage table order</legend>
+          <p className="mb-3 text-xs text-muted">
+            Drag platforms (or use the arrows) to set the comparison table order. Only platforms marked visible
+            on the homepage appear here and in the table. Manage a platform&rsquo;s rating, logo, offer, categories and
+            visibility in Operators.
+          </p>
+          <HomepageOrder initial={homepageOrder} />
         </fieldset>
 
         <fieldset className="u-glass rounded-lg p-4">
