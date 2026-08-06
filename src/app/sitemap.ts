@@ -4,10 +4,9 @@ import { getSitemapEntriesForMarket } from '@/lib/data/sitemap';
 import { SUPPORTED_MARKETS } from '@/lib/geo';
 import { absoluteUrl } from '@/lib/seo';
 
-// A single sitemap served at /sitemap.xml, covering every market. The US lives
-// at the root and the UK under /uk, so both are combined here. Generated at
-// request time so it reflects the current database and does not run Supabase
-// queries during the build.
+// A single sitemap served at /sitemap.xml. The site is one namespace at the
+// root. Generated at request time so it reflects the current database and does
+// not run Supabase queries during the build.
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
