@@ -149,6 +149,9 @@ export interface HomeArticlePlatform {
   name: string;
   logoUrl: string | null;
   rating: number | null;
+  summary: string | null;
+  pros: string[];
+  offerTitle: string | null;
   availabilityLabel: string;
   reviewHref: string;
   cta: { href: string; tracked: boolean } | null;
@@ -160,6 +163,9 @@ export interface HomeArticleBlock {
   heading: string | null;
   body: string | null;
   badge: string | null;
+  cardStyle: 'compact' | 'featured' | null;
+  mediaUrl: string | null;
+  href: string | null;
   platform: HomeArticlePlatform | null;
 }
 
@@ -185,13 +191,21 @@ export const getHomepageArticle = cache(async (market: MarketCode): Promise<Home
 
   const platformById = new Map<string, HomeArticlePlatform>();
   if (operatorIds.length > 0) {
-    const [{ data: operators }, { data: links }] = await Promise.all([
+    const nowIso = new Date().toISOString();
+    const [{ data: operators }, { data: links }, { data: offerRows }] = await Promise.all([
       supabase
         .from('operators')
-        .select('id, slug, name, logo_url, logo_dark_url, rating, tracking_url, website_url, availability_scope, available_countries')
+        .select('id, slug, name, logo_url, logo_dark_url, rating, summary, pros, tracking_url, website_url, availability_scope, available_countries')
         .eq('active', true)
         .in('id', operatorIds),
       supabase.from('affiliate_links').select('slug, operator_id, market_id, active').eq('active', true).in('operator_id', operatorIds),
+      supabase
+        .from('offers')
+        .select('operator_id, title, active, starts_at, expires_at, last_verified_at')
+        .in('operator_id', operatorIds)
+        .eq('active', true)
+        .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+        .or(`expires_at.is.null,expires_at.gte.${nowIso}`),
     ]);
 
     const slugByOperator = new Map<string, string>();
@@ -201,17 +215,24 @@ export const getHomepageArticle = cache(async (market: MarketCode): Promise<Home
         slugByOperator.set(link.operator_id, link.slug);
       }
     }
+    const offerByOperator = new Map<string, string>();
+    for (const o of offerRows ?? []) {
+      if (!offerByOperator.has(o.operator_id)) offerByOperator.set(o.operator_id, o.title);
+    }
 
     for (const op of operators ?? []) {
       const cta = resolveCta(
         { affiliateSlug: slugByOperator.get(op.id) ?? null, trackingUrl: op.tracking_url, websiteUrl: op.website_url },
-        { placement: 'home_article', label: 'Sign up', page: '/' },
+        { placement: 'home_article', label: 'Visit Site', page: '/' },
       );
       platformById.set(op.id, {
         slug: op.slug,
         name: op.name,
         logoUrl: op.logo_dark_url ?? op.logo_url,
         rating: op.rating,
+        summary: op.summary,
+        pros: Array.isArray(op.pros) ? op.pros.slice(0, 3) : [],
+        offerTitle: offerByOperator.get(op.id) ?? null,
         availabilityLabel: availabilityLabel(op.availability_scope, op.available_countries),
         reviewHref: marketPath(market, `/reviews/${op.slug}`),
         cta,
@@ -225,6 +246,9 @@ export const getHomepageArticle = cache(async (market: MarketCode): Promise<Home
     heading: b.heading,
     body: b.body,
     badge: b.badge,
+    cardStyle: (b.card_style === 'compact' || b.card_style === 'featured' ? b.card_style : null),
+    mediaUrl: b.media_url,
+    href: b.href,
     platform: b.operator_id ? (platformById.get(b.operator_id) ?? null) : null,
   }));
 });

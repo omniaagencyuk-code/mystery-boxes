@@ -30,8 +30,21 @@ const ARTICLE_BLOCK_OPTIONS = [
   { value: 'H2', label: 'Heading (H2)' },
   { value: 'H3', label: 'Subheading (H3)' },
   { value: 'PARAGRAPH', label: 'Paragraph' },
+  { value: 'LIST', label: 'List (one item per line)' },
+  { value: 'IMAGE', label: 'Image' },
+  { value: 'TABLE', label: 'Table (rows on lines, cells split by |)' },
+  { value: 'INFO_BOX', label: 'Info box' },
+  { value: 'WARNING_BOX', label: 'Warning box' },
+  { value: 'PROS_CONS', label: 'Pros and cons (+ pro / - con per line)' },
+  { value: 'BUTTON', label: 'Button' },
+  { value: 'INTERNAL_LINK', label: 'Internal link' },
   { value: 'PLATFORM_CARD', label: 'Platform card' },
-  { value: 'CALLOUT', label: 'Callout' },
+];
+
+const CARD_STYLE_OPTIONS = [
+  { value: '', label: 'Compact (default)' },
+  { value: 'compact', label: 'Compact' },
+  { value: 'featured', label: 'Featured' },
 ];
 
 const DEFAULT_SECTION_ORDER: HomepageSectionType[] = [
@@ -152,7 +165,7 @@ export default async function HomepageEditorPage({
       .order('position'),
     db
       .from('homepage_article_blocks')
-      .select('block_type, heading, body, operator_id, badge, visible, position')
+      .select('block_type, heading, body, operator_id, badge, card_style, media_url, href, visible, position')
       .eq('market_id', marketId)
       .order('position'),
     db.from('operators').select('id, name, slug').eq('active', true).order('name'),
@@ -168,6 +181,9 @@ export default async function HomepageEditorPage({
     heading: b.heading ?? '',
     body: b.body ?? '',
     operator_id: b.operator_id ?? '',
+    card_style: b.card_style ?? '',
+    media_url: b.media_url ?? '',
+    href: b.href ?? '',
     visible: b.visible,
   }));
 
@@ -340,16 +356,19 @@ export default async function HomepageEditorPage({
             name="article_json"
             addLabel="Add block"
             initial={articleInitial}
-            newItem={{ block_type: 'PARAGRAPH', badge: '', heading: '', body: '', operator_id: '', visible: true }}
+            newItem={{ block_type: 'PARAGRAPH', badge: '', heading: '', body: '', operator_id: '', card_style: '', media_url: '', href: '', visible: true }}
             labelKey="block_type"
             labelFallback="Block"
             fields={[
               { key: 'block_type', label: 'Type', type: 'select', options: ARTICLE_BLOCK_OPTIONS },
               { key: 'visible', label: 'Visible', type: 'checkbox' },
               { key: 'operator_id', label: 'Platform (for a Platform card)', type: 'select', options: operatorOptions },
+              { key: 'card_style', label: 'Card style (Platform card)', type: 'select', options: CARD_STYLE_OPTIONS },
               { key: 'badge', label: 'Badge (e.g. Best Overall)' },
-              { key: 'heading', label: 'Heading (for H2/H3/Callout)', full: true },
+              { key: 'heading', label: 'Heading / label', full: true },
               { key: 'body', label: 'Body text', type: 'textarea', full: true },
+              { key: 'media_url', label: 'Image URL (Image block)' },
+              { key: 'href', label: 'Link URL (Button / link)' },
             ]}
           />
         </fieldset>

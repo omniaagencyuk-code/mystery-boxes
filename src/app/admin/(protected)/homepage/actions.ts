@@ -128,6 +128,7 @@ export async function saveHomepage(formData: FormData) {
     .filter((r) => ARTICLE_BLOCK_TYPES.has(rowStr(r, 'block_type') as HomepageArticleBlockType))
     .map((r, i) => {
       const operatorId = rowStr(r, 'operator_id');
+      const cardStyle = rowStr(r, 'card_style');
       return {
         market_id,
         block_type: rowStr(r, 'block_type') as HomepageArticleBlockType,
@@ -135,6 +136,9 @@ export async function saveHomepage(formData: FormData) {
         body: rowStr(r, 'body') || null,
         operator_id: operatorId || null,
         badge: rowStr(r, 'badge') || null,
+        card_style: cardStyle === 'compact' || cardStyle === 'featured' ? cardStyle : null,
+        media_url: rowStr(r, 'media_url') || null,
+        href: rowStr(r, 'href') || null,
         visible: rowBool(r, 'visible'),
         position: i,
       };
