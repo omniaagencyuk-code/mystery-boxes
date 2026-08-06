@@ -52,34 +52,18 @@ export async function isOperatorGeoBlockedViaRest(
 }
 
 /**
- * Data-layer helper. Returns the set of operator ids that are geo-blocked for the
- * visitor's detected chain, so listing queries can exclude them. This is the
- * authoritative path and runs with the RLS-bound server client.
+ * Data-layer helper, retained as a no-op. The site no longer hard geo-blocks:
+ * availability is a per-record property surfaced as a UI filter, not a gate that
+ * hides pages, so every published page renders for every visitor (including
+ * search crawlers). This always returns an empty set so no listing or review
+ * page is ever suppressed. The `requires_geo_block` column is preserved in case
+ * a hard block is ever reinstated.
  */
 export async function getGeoBlockedOperatorIds(
   supabase: SupabaseClient<Database>,
   chain: readonly string[],
 ): Promise<Set<string>> {
-  if (chain.length === 0) return new Set();
-
-  // Resolve the chain codes to market ids first, then look up blocks by id. This
-  // keeps both queries simple and well typed (no embedded-resource filtering).
-  const { data: markets, error: marketError } = await supabase
-    .from('markets')
-    .select('id')
-    .in('code', chain as string[]);
-
-  if (marketError || !markets || markets.length === 0) return new Set();
-
-  const { data, error } = await supabase
-    .from('operator_markets')
-    .select('operator_id')
-    .eq('requires_geo_block', true)
-    .in(
-      'market_id',
-      markets.map((m) => m.id),
-    );
-
-  if (error || !data) return new Set();
-  return new Set(data.map((row) => row.operator_id));
+  void supabase;
+  void chain;
+  return new Set();
 }

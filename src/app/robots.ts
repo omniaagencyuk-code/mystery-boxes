@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 import { absoluteUrl } from '@/lib/seo';
 
-// Allow crawling everywhere. We never block crawlers wholesale: the only gate is
-// the per-market hard geo block, which applies to everyone equally. Point robots
-// at the sitemap index.
+// Allow crawling everywhere. Only the admin area and the affiliate redirect
+// (/go/) are disallowed; every content page is crawlable. Point robots at the
+// sitemap.
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/go/'] }],

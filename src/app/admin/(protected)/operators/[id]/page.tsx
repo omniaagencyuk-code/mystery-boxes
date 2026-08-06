@@ -139,6 +139,24 @@ export default async function OperatorFormPage({
           </Field>
         </div>
 
+        <fieldset className="rounded-lg border border-line p-4">
+          <legend className="px-1 text-sm font-medium">Homepage comparison table</legend>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="flex items-center gap-2 text-sm text-ink">
+              <input type="checkbox" name="homepage_visible" defaultChecked={operator?.homepage_visible ?? true} /> Show on homepage table
+            </label>
+            <label className="flex items-center gap-2 text-sm text-ink">
+              <input type="checkbox" name="recommended" defaultChecked={operator?.recommended ?? false} /> Recommended
+            </label>
+            <Field label="Homepage position" htmlFor="homepage_position" hint="Lower shows first. Leave blank to sort by rating.">
+              <input id="homepage_position" name="homepage_position" type="number" defaultValue={operator?.homepage_position ?? ''} className={inputCls} />
+            </Field>
+            <Field label="Table label" htmlFor="table_label" hint="Optional badge: Recommended, Popular, New. Hidden when empty.">
+              <input id="table_label" name="table_label" defaultValue={operator?.table_label ?? ''} className={inputCls} />
+            </Field>
+          </div>
+        </fieldset>
+
         <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-start">
           {operator?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element

@@ -23,7 +23,20 @@ export type HomepageSectionType =
   | 'final_cta'
   | 'best_sites_article';
 
-export type HomepageArticleBlockType = 'H2' | 'H3' | 'PARAGRAPH' | 'PLATFORM_CARD' | 'CALLOUT';
+export type HomepageArticleBlockType =
+  | 'H2'
+  | 'H3'
+  | 'PARAGRAPH'
+  | 'PLATFORM_CARD'
+  | 'CALLOUT'
+  | 'LIST'
+  | 'IMAGE'
+  | 'TABLE'
+  | 'BUTTON'
+  | 'INTERNAL_LINK'
+  | 'INFO_BOX'
+  | 'WARNING_BOX'
+  | 'PROS_CONS';
 
 export type FreePageSectionType =
   | 'HERO'
@@ -158,6 +171,10 @@ export interface Database {
           available_countries: string[];
           excluded_states: string[];
           features: string[];
+          recommended: boolean;
+          homepage_visible: boolean;
+          homepage_position: number | null;
+          table_label: string | null;
         };
         Insert: {
           id?: string;
@@ -194,6 +211,10 @@ export interface Database {
           available_countries?: string[];
           excluded_states?: string[];
           features?: string[];
+          recommended?: boolean;
+          homepage_visible?: boolean;
+          homepage_position?: number | null;
+          table_label?: string | null;
         };
         Update: Partial<Database['public']['Tables']['operators']['Insert']>;
         Relationships: [];
@@ -641,6 +662,10 @@ export interface Database {
           operator_id: string | null;
           badge: string | null;
           visible: boolean;
+          card_style: string | null;
+          media_url: string | null;
+          href: string | null;
+          config: Record<string, unknown>;
         };
         Insert: {
           id?: string;
@@ -652,6 +677,10 @@ export interface Database {
           operator_id?: string | null;
           badge?: string | null;
           visible?: boolean;
+          card_style?: string | null;
+          media_url?: string | null;
+          href?: string | null;
+          config?: Record<string, unknown>;
         };
         Update: Partial<Database['public']['Tables']['homepage_article_blocks']['Insert']>;
         Relationships: [];

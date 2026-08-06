@@ -82,6 +82,11 @@ export async function saveOperator(formData: FormData) {
     hero_image_url: heroImageUrl,
     logo_light_url: logoLightUrl,
     logo_dark_url: logoDarkUrl,
+    // Homepage table controls (single source of truth for the comparison table).
+    homepage_visible: bool(formData, 'homepage_visible'),
+    homepage_position: numOrNull(formData, 'homepage_position'),
+    recommended: bool(formData, 'recommended'),
+    table_label: strOrNull(formData, 'table_label'),
   };
 
   // Upsert the operator and get its id.

@@ -128,6 +128,7 @@ export async function saveHomepage(formData: FormData) {
     .filter((r) => ARTICLE_BLOCK_TYPES.has(rowStr(r, 'block_type') as HomepageArticleBlockType))
     .map((r, i) => {
       const operatorId = rowStr(r, 'operator_id');
+      const cardStyle = rowStr(r, 'card_style');
       return {
         market_id,
         block_type: rowStr(r, 'block_type') as HomepageArticleBlockType,
@@ -135,6 +136,9 @@ export async function saveHomepage(formData: FormData) {
         body: rowStr(r, 'body') || null,
         operator_id: operatorId || null,
         badge: rowStr(r, 'badge') || null,
+        card_style: cardStyle === 'compact' || cardStyle === 'featured' ? cardStyle : null,
+        media_url: rowStr(r, 'media_url') || null,
+        href: rowStr(r, 'href') || null,
         visible: rowBool(r, 'visible'),
         position: i,
       };
@@ -142,6 +146,25 @@ export async function saveHomepage(formData: FormData) {
   await db.from('homepage_article_blocks').delete().eq('market_id', market_id);
   if (articleRows.length > 0) {
     const { error } = await db.from('homepage_article_blocks').insert(articleRows);
+    if (error) throw new Error(error.message);
+  }
+
+  // Homepage table order: the drag-and-drop control posts an ordered array of
+  // operator ids. Write the position back to each operator (shared record), so
+  // the homepage comparison table reflects the new order.
+  const orderIds = (() => {
+    try {
+      const parsed: unknown = JSON.parse(str(formData, 'homepage_order_json') || '[]');
+      return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+    } catch {
+      return [];
+    }
+  })();
+  for (let i = 0; i < orderIds.length; i += 1) {
+    const { error } = await db
+      .from('operators')
+      .update({ homepage_position: (i + 1) * 10 })
+      .eq('id', orderIds[i]);
     if (error) throw new Error(error.message);
   }
 

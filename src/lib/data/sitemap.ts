@@ -7,13 +7,10 @@ export interface SitemapEntry {
 }
 
 /**
- * URLs for a single market's sitemap: the market home, its categories, its
- * published pages, and review pages for operators that are visible in the market
- * and NOT geo-blocked for that market's own region.
- *
- * We exclude operators geo-blocked for the market so we do not advertise URLs
- * that would 404 for a crawler located in that market (most crawlers are US
- * based). This is the honest consequence of hard geo-blocking.
+ * URLs for the sitemap: the home page, every hub, published pages/posts,
+ * categories, the /free page (when published) and a review page for every
+ * active, visible operator. The site no longer hard geo-blocks, so no page is
+ * suppressed: everything published is listed and crawlable.
  */
 export async function getSitemapEntriesForMarket(
   market: MarketCode,
@@ -37,6 +34,16 @@ export async function getSitemapEntriesForMarket(
     { path: marketPath(market, '/guides') },
     { path: marketPath(market, '/news') },
   ];
+
+  // The /free page, when published and indexable.
+  const { data: freeSettings } = await supabase
+    .from('free_page_settings')
+    .select('published, index_status')
+    .eq('page_key', 'free')
+    .maybeSingle();
+  if ((!freeSettings || freeSettings.published) && freeSettings?.index_status !== 'noindex') {
+    entries.push({ path: marketPath(market, '/free') });
+  }
 
   // Published posts (news) for this market.
   const { data: posts } = await supabase
@@ -74,14 +81,6 @@ export async function getSitemapEntriesForMarket(
     .eq('market_id', marketRow.id)
     .eq('visible', true);
   const visibleIds = new Set((visible ?? []).map((r) => r.operator_id));
-
-  // Operators geo-blocked for this market, to exclude.
-  const { data: blocked } = await supabase
-    .from('operator_markets')
-    .select('operator_id')
-    .eq('market_id', marketRow.id)
-    .eq('requires_geo_block', true);
-  for (const r of blocked ?? []) visibleIds.delete(r.operator_id);
 
   if (visibleIds.size > 0) {
     const { data: operators } = await supabase
