@@ -1,9 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { isOperatorGeoBlockedViaRest } from '@/lib/data/geo-block';
 import { updateSession } from '@/lib/supabase/session';
 import {
-  BANNER_DISMISS_COOKIE,
   GEO_HEADERS,
   GEO_OVERRIDE_COOKIE,
   GEO_OVERRIDE_PARAM,
@@ -17,28 +15,18 @@ import {
  * Proxy (formerly the middleware file convention, renamed in Next 16).
  * Responsibilities, kept strictly separate:
  *
- *  - Market ROUTING: the US is the default region served at the site root (no
- *    prefix) and the UK lives under /uk. Root app paths are rewritten internally
- *    to the /us route tree while the browser URL stays clean, and explicit /us
- *    URLs are permanently redirected to their clean root equivalent. We NEVER
- *    hard-redirect based on IP.
+ *  - Admin auth gate: require a logged-in user for /admin (except the login page).
  *
- *  - Geo DETECTION: read the visitor country/region from Vercel headers and pass
- *    a market context to the app via request headers.
+ *  - Single-namespace ROUTING: the site is served at the root. Clean root paths
+ *    are rewritten internally onto the /us route tree while the browser URL stays
+ *    unprefixed. Legacy /uk/* URLs are permanently redirected (301) to their root
+ *    equivalent, and explicit /us/* URLs are redirected (308) to the clean root,
+ *    so there is a single canonical URL for every page. We NEVER redirect on IP.
  *
- *  - Soft market SUGGESTION: if the detected market differs from the market the
- *    visitor is viewing, and they have not dismissed the banner, signal the app
- *    to show a dismissable switch banner.
- *
- *  - Hard geo BLOCK: for a review page whose operator requires_geo_block for the
- *    visitor's detected market, return a 404 (not a 403, so the page does not
- *    advertise its own existence). This is a fast early guard; the review page
- *    re-checks authoritatively against the database. Crawlers are never blocked
- *    wholesale, only by the same per-market rule as everyone else.
+ *  - Geo DETECTION: read the visitor country/region and forward a light geo
+ *    context to the app on request headers. There is no market switching and no
+ *    hard geo block; availability is a per-record filter surfaced in the UI.
  */
-
-// Matches a review page at the root (/reviews/x) or under the UK (/uk/reviews/x).
-const REVIEW_PATH = /^(?:\/uk)?\/reviews\/([^/]+)\/?$/;
 
 function readGeo(request: NextRequest): { country: string | null; region: string | null } {
   // Production: Vercel geolocation headers (request.geo was removed in Next 16).
@@ -78,8 +66,16 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // The US market lives at the root. Redirect any explicit /us or /us/* URL to
-  // its clean root equivalent so there is a single canonical US URL.
+  // The UK subdirectory has been removed. Permanently redirect legacy /uk or
+  // /uk/* URLs to their root equivalent so old links and search results resolve.
+  if (pathname === '/uk' || pathname.startsWith('/uk/')) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.slice(3) || '/';
+    return NextResponse.redirect(url, 301);
+  }
+
+  // Redirect any explicit /us or /us/* URL to its clean root equivalent so there
+  // is a single canonical URL.
   if (pathname === '/us' || pathname.startsWith('/us/')) {
     const url = request.nextUrl.clone();
     url.pathname = pathname.slice(3) || '/';
@@ -89,41 +85,20 @@ export async function proxy(request: NextRequest) {
   const { country, region } = readGeo(request);
   const chain = detectMarketChain(country, region);
   const detectedMarket = rootMarketFromChain(chain);
-
-  const isUk = pathname === '/uk' || pathname.startsWith('/uk/');
   const isGo = pathname === '/go' || pathname.startsWith('/go/');
-  // Root paths represent the US (the default region); /uk/* represents the UK.
-  const pathMarket = isUk ? 'uk' : ROOT_MARKET;
 
-  // Hard geo block: 404 a blocked review page before it renders.
-  const reviewMatch = pathname.match(REVIEW_PATH);
-  if (reviewMatch) {
-    const operatorSlug = decodeURIComponent(reviewMatch[1]);
-    if (await isOperatorGeoBlockedViaRest(operatorSlug, chain)) {
-      // Rewrite to a path with no route so Next serves not-found with a 404
-      // status. A 404 (not 403) keeps the operator's existence private.
-      return NextResponse.rewrite(new URL('/__mb_geo_blocked', request.url));
-    }
-  }
-
-  // Soft suggestion: offer to switch when the detected market differs from the
-  // one being viewed and the banner has not been dismissed.
-  const dismissed = request.cookies.get(BANNER_DISMISS_COOKIE)?.value === '1';
-  const suggestSwitch =
-    !dismissed && detectedMarket && detectedMarket !== pathMarket ? detectedMarket : null;
-
-  // Forward the geo context to the app on request headers.
+  // Forward a light geo context to the app on request headers.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(GEO_HEADERS.country, country ?? '');
   requestHeaders.set(GEO_HEADERS.region, region ?? '');
   requestHeaders.set(GEO_HEADERS.detectedMarket, detectedMarket ?? '');
   requestHeaders.set(GEO_HEADERS.geoCandidates, chain.join(','));
-  requestHeaders.set(GEO_HEADERS.pathMarket, pathMarket);
-  requestHeaders.set(GEO_HEADERS.suggestSwitch, suggestSwitch ?? '');
+  requestHeaders.set(GEO_HEADERS.pathMarket, ROOT_MARKET);
+  requestHeaders.set(GEO_HEADERS.suggestSwitch, '');
 
-  // Root (US) app paths render the /us route tree internally while the browser
-  // keeps the clean, unprefixed URL. /uk and /go pass through unchanged.
-  if (!isUk && !isGo) {
+  // Root app paths render the /us route tree internally while the browser keeps
+  // the clean, unprefixed URL. /go (the affiliate tracker) passes through.
+  if (!isGo) {
     const target = request.nextUrl.clone();
     target.pathname = pathname === '/' ? '/us' : `/us${pathname}`;
     return NextResponse.rewrite(target, { request: { headers: requestHeaders } });
