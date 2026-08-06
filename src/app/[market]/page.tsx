@@ -9,6 +9,7 @@ import { CheckIcon } from '@/components/review/icons';
 import { getCategoriesForMarket, getGuidesForMarket, getMarketPromoOffers } from '@/lib/data/content';
 import {
   getFeaturedOperatorsForMarket,
+  getHomepageArticle,
   getHomepageConfig,
   getLatestReviewedOperators,
 } from '@/lib/data/homepage';
@@ -81,7 +82,7 @@ export default async function MarketHomePage({
   const marketCode = market as MarketCode;
 
   const { geoChain } = await getRequestGeoContext();
-  const [config, operators, categories, promo, guides, latestReviewed, featured] = await Promise.all([
+  const [config, operators, categories, promo, guides, latestReviewed, featured, article] = await Promise.all([
     getHomepageConfig(marketCode),
     getVisibleOperatorsForMarket(marketCode, geoChain),
     getCategoriesForMarket(marketCode),
@@ -89,6 +90,7 @@ export default async function MarketHomePage({
     getGuidesForMarket(marketCode),
     getLatestReviewedOperators(marketCode, geoChain, 5),
     getFeaturedOperatorsForMarket(marketCode, geoChain),
+    getHomepageArticle(marketCode),
   ]);
 
   const now = new Date();
@@ -107,6 +109,7 @@ export default async function MarketHomePage({
     guides,
     latestReviewed,
     featured,
+    article,
   };
 
   const { settings, trustIndicators } = config;
