@@ -175,6 +175,9 @@ export function OperatorCard({ operator, market, variant, featured, rank }: Oper
             <Rating value={operator.rating} />
           </div>
           {operator.summary && <p className="mt-1 text-sm text-muted">{operator.summary}</p>}
+          <p className="mt-1 text-xs text-muted">
+            Available in <span className="font-medium text-ink">{operator.availabilityLabel}</span>
+          </p>
         </div>
       </div>
 

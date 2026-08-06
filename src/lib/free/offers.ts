@@ -1,8 +1,11 @@
 // Pure, unit-testable logic for the /free offer list: availability labelling,
 // filter matching, sorting and pagination. No IO here so it can be tested
 // deterministically; the DB fetch lives in src/lib/data/free.ts.
+import { availabilityLabel, availableIn } from '@/lib/availability';
 import type { OfferFreshness } from '@/lib/reviews/offer-state';
 import type { AvailabilityScope, OfferType, PrizeValueBand } from '@/lib/supabase/types';
+
+export { availabilityLabel };
 
 export type FreeSort = 'rating' | 'last_verified' | 'category' | 'offer_type' | 'platform';
 
@@ -62,38 +65,9 @@ export function verifiedLabel(
   return { text: 'Verified', verified: true };
 }
 
-/** Human-readable availability text. Never flags alone, always words. */
-export function availabilityLabel(scope: AvailabilityScope, countries: readonly string[] = []): string {
-  switch (scope) {
-    case 'us':
-      return 'US';
-    case 'uk':
-      return 'UK';
-    case 'both':
-      return 'US and UK';
-    case 'global':
-      return 'Global';
-    case 'selected':
-      return countries.length ? countries.join(', ') : 'Selected countries';
-  }
-}
-
 /** Whether a row is available for a chosen availability filter value. */
 export function matchesAvailability(row: FreeOfferRow, value: FreeFilters['availability']): boolean {
-  if (!value) return true;
-  const { availabilityScope: s, availableCountries: c } = row;
-  const inUs = s === 'us' || s === 'both' || s === 'global' || (s === 'selected' && c.includes('US'));
-  const inUk = s === 'uk' || s === 'both' || s === 'global' || (s === 'selected' && (c.includes('GB') || c.includes('UK')));
-  switch (value) {
-    case 'us':
-      return inUs;
-    case 'uk':
-      return inUk;
-    case 'both':
-      return inUs && inUk;
-    case 'global':
-      return s === 'global';
-  }
+  return availableIn(row.availabilityScope, row.availableCountries, value ?? null);
 }
 
 /** Feature filter: availability tokens map to the availability model, the rest

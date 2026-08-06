@@ -1,5 +1,6 @@
 import { cache } from 'react';
 
+import { availabilityLabel } from '@/lib/availability';
 import { getGeoBlockedOperatorIds } from '@/lib/data/geo-block';
 import { getMarketByCode, getOperatorTypeSlugMap } from '@/lib/data/markets';
 import type { MarketCode } from '@/lib/geo';
@@ -21,6 +22,9 @@ function toSummary(row: OperatorRow, typeSlug: OperatorTypeSlug): OperatorSummar
     operatorType: typeSlug,
     licenceAuthority: row.licence_authority,
     licenceNumber: row.licence_number,
+    availabilityScope: row.availability_scope,
+    availableCountries: row.available_countries,
+    availabilityLabel: availabilityLabel(row.availability_scope, row.available_countries),
   };
 }
 
