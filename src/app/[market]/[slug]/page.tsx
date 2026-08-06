@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
+import { AvailabilityFilter } from '@/components/availability-filter';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { CategoryLanding } from '@/components/category/category-landing';
 import { Markdown } from '@/components/markdown';
+import { availableIn, type AvailabilityFilterValue } from '@/lib/availability';
 import { getCategoryForMarket, getPageForMarket } from '@/lib/data/content';
 import { getCategoryPageData } from '@/lib/data/category-page';
 import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
@@ -12,6 +14,7 @@ import { getRequestGeoContext } from '@/lib/request-context';
 import { marketAlternates } from '@/lib/seo';
 
 type Params = { market: string; slug: string };
+type SearchParams = { availability?: string };
 
 /**
  * A single /[market]/[slug] URL can be a category landing or a guide/money page.
@@ -75,12 +78,20 @@ export async function generateMetadata({
 
 export default async function MarketSlugPage({
   params,
+  searchParams,
 }: {
   params: Promise<Params>;
+  searchParams: Promise<SearchParams>;
 }) {
   const { market, slug } = await params;
   if (!isSupportedMarket(market)) notFound();
   const marketCode = market as MarketCode;
+
+  const { availability } = await searchParams;
+  const availValue =
+    availability && ['us', 'uk', 'both', 'global'].includes(availability)
+      ? (availability as AvailabilityFilterValue)
+      : null;
 
   const resolved = await resolve(marketCode, slug);
   if (!resolved) notFound();
@@ -94,6 +105,15 @@ export default async function MarketSlugPage({
     const { geoChain } = await getRequestGeoContext();
     const data = await getCategoryPageData(marketCode, slug, geoChain);
     if (!data) notFound();
+
+    const filteredData = availValue
+      ? {
+          ...data,
+          operators: data.operators.filter((op) =>
+            availableIn(op.availabilityScope, op.availableCountries, availValue),
+          ),
+        }
+      : data;
 
     return (
       <div className="space-y-8">
@@ -115,7 +135,10 @@ export default async function MarketSlugPage({
             <p className="text-muted">We have nothing to show here for your region right now.</p>
           </>
         ) : (
-          <CategoryLanding data={data} market={marketCode} />
+          <>
+            {data.operators.length > 0 && <AvailabilityFilter resultCount={filteredData.operators.length} />}
+            <CategoryLanding data={filteredData} market={marketCode} />
+          </>
         )}
       </div>
     );

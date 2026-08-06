@@ -291,7 +291,10 @@ export const getFreePageConfig = cache(async (): Promise<FreePageConfig> => {
     canonicalUrl: s?.canonical_url?.trim() || null,
     ogImageUrl: s?.og_image_url?.trim() || null,
     indexStatus: s?.index_status || DEFAULT_SETTINGS.indexStatus,
-    published: s?.published ?? DEFAULT_SETTINGS.published,
+    // When no settings row exists yet (migration seed not loaded), treat the
+    // page as published so it renders on defaults. Only an explicit published =
+    // false on a real row unpublishes it.
+    published: s ? s.published : true,
     author: s?.author?.trim() || null,
     reviewer: s?.reviewer?.trim() || null,
     updatedAt: s?.updated_at ?? null,

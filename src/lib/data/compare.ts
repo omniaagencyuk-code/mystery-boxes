@@ -1,9 +1,11 @@
 import { cache } from 'react';
 
+import { availabilityLabel } from '@/lib/availability';
 import { getGeoBlockedOperatorIds } from '@/lib/data/geo-block';
 import { getMarketByCode } from '@/lib/data/markets';
 import type { MarketCode } from '@/lib/geo';
 import { createServerSupabase } from '@/lib/supabase/server';
+import type { AvailabilityScope } from '@/lib/supabase/types';
 
 export interface ComparePlatform {
   slug: string;
@@ -19,6 +21,9 @@ export interface ComparePlatform {
   minAge: string | null;
   paymentMethods: string[];
   usAvailable: boolean;
+  availabilityScope: AvailabilityScope;
+  availableCountries: string[];
+  availabilityLabel: string;
   trackingUrl: string | null;
   lastCheckedISO: string | null;
 }
@@ -54,7 +59,7 @@ export const getComparePlatforms = cache(
     ] = await Promise.all([
       supabase
         .from('operators')
-        .select('id, slug, name, logo_url, rating, tracking_url, buyback, shipping_info, min_age')
+        .select('id, slug, name, logo_url, rating, tracking_url, buyback, shipping_info, min_age, availability_scope, available_countries')
         .eq('active', true)
         .in('id', ids)
         .order('rating', { ascending: false, nullsFirst: false })
@@ -126,6 +131,9 @@ export const getComparePlatforms = cache(
         minAge: op.min_age,
         paymentMethods: paymentsByOp.get(op.id) ?? [],
         usAvailable: usAvailableByOp.get(op.id) ?? false,
+        availabilityScope: op.availability_scope,
+        availableCountries: op.available_countries,
+        availabilityLabel: availabilityLabel(op.availability_scope, op.available_countries),
         trackingUrl: op.tracking_url,
         lastCheckedISO: review?.last_checked_at ?? null,
       };
