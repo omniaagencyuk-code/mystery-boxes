@@ -1,15 +1,17 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
+import { AvailabilityFilter } from '@/components/availability-filter';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { CompareTool } from '@/components/compare/compare-tool';
+import { availableIn, type AvailabilityFilterValue } from '@/lib/availability';
 import { getComparePlatforms } from '@/lib/data/compare';
 import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { getRequestGeoContext } from '@/lib/request-context';
 import { marketAlternates } from '@/lib/seo';
 
 type Params = { market: string };
-type Search = { ids?: string };
+type Search = { ids?: string; availability?: string };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { market } = await params;
@@ -32,14 +34,21 @@ export default async function ComparePage({
   if (!isSupportedMarket(market)) notFound();
   const marketCode = market as MarketCode;
 
-  const { ids } = await searchParams;
+  const { ids, availability } = await searchParams;
   const initialSlugs = (ids ?? '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+  const availValue =
+    availability && ['us', 'uk', 'both', 'global'].includes(availability)
+      ? (availability as AvailabilityFilterValue)
+      : null;
 
   const { geoChain } = await getRequestGeoContext();
-  const platforms = await getComparePlatforms(marketCode, geoChain);
+  const all = await getComparePlatforms(marketCode, geoChain);
+  const platforms = availValue
+    ? all.filter((p) => availableIn(p.availabilityScope, p.availableCountries, availValue))
+    : all;
 
   return (
     <div className="space-y-8">
@@ -59,8 +68,10 @@ export default async function ComparePage({
         </p>
       </header>
 
+      <AvailabilityFilter resultCount={platforms.length} />
+
       {platforms.length === 0 ? (
-        <p className="text-muted">We have nothing to compare for your region right now.</p>
+        <p className="text-muted">No platforms match this availability filter. Try All regions.</p>
       ) : (
         <CompareTool platforms={platforms} market={marketCode} initialSlugs={initialSlugs} />
       )}

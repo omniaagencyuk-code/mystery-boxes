@@ -1,31 +1,25 @@
 // Geo detection primitives shared by middleware and the data layer.
 //
-// Two distinct behaviours are built on top of this module. Do not conflate them:
-//   1. Soft market suggestion: a dismissable banner if the visitor's detected
-//      market differs from the market section they are viewing. Never a redirect.
-//   2. Hard geo block: operators flagged requires_geo_block for the visitor's
-//      detected market must not be served at all (404) and must be excluded from
-//      every listing.
+// The site serves a single namespace at the root (no US/UK subdirectories).
+// Availability is a per-record property surfaced as a filter, not a URL section.
+// This module keeps a minimal geo context (country/region forwarded on request
+// headers) for future use, but there is no market switching and no hard geo
+// redirect based on IP.
 
-/** Top level markets that have a URL section (/uk, /us). */
-export const SUPPORTED_MARKETS = ['uk', 'us'] as const;
+/** The site now serves a single market at the root. */
+export const SUPPORTED_MARKETS = ['us'] as const;
 export type MarketCode = (typeof SUPPORTED_MARKETS)[number];
 
 export function isSupportedMarket(value: string): value is MarketCode {
   return (SUPPORTED_MARKETS as readonly string[]).includes(value);
 }
 
-/** Human labels for the market chooser and the soft-switch banner. */
+/** Human label for the single market. */
 export const MARKET_LABELS: Record<MarketCode, string> = {
-  uk: 'United Kingdom',
   us: 'United States',
 };
 
-/**
- * The market served at the site root (no path prefix). The US is the default
- * region: it lives at the root, and the UK lives under /uk. International
- * visitors land on the US site at the root without any /us prefix.
- */
+/** The market served at the site root (no path prefix). */
 export const ROOT_MARKET: MarketCode = 'us';
 
 /** URL prefix for a market: '' for the root market, '/uk' otherwise. */
@@ -80,8 +74,6 @@ export function detectMarketChain(
 ): MarketCode[] | string[] {
   if (!country) return [];
   const c = country.toUpperCase();
-
-  if (c === 'GB') return ['uk'];
 
   if (c === 'US') {
     const r = region?.trim();

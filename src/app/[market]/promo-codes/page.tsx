@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
+import { AvailabilityFilter } from '@/components/availability-filter';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { PromoList, type PromoItem } from '@/components/promo/promo-list';
+import { availableIn, type AvailabilityFilterValue } from '@/lib/availability';
 import { getMarketPromoOffers } from '@/lib/data/content';
 import { marketPath, isSupportedMarket, MARKET_LABELS, type MarketCode } from '@/lib/geo';
 import { formatReviewDate } from '@/lib/reviews/format';
@@ -22,10 +24,22 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   };
 }
 
-export default async function PromoCodesPage({ params }: { params: Promise<Params> }) {
+export default async function PromoCodesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams: Promise<{ availability?: string }>;
+}) {
   const { market } = await params;
   if (!isSupportedMarket(market)) notFound();
   const marketCode = market as MarketCode;
+
+  const { availability } = await searchParams;
+  const availValue =
+    availability && ['us', 'uk', 'both', 'global'].includes(availability)
+      ? (availability as AvailabilityFilterValue)
+      : null;
 
   const { geoChain } = await getRequestGeoContext();
   const raw = await getMarketPromoOffers(marketCode, geoChain);
@@ -33,6 +47,7 @@ export default async function PromoCodesPage({ params }: { params: Promise<Param
 
   // Keep only usable offers (active, in-window) and map to a serializable shape.
   const items: PromoItem[] = raw
+    .filter(({ operator }) => availableIn(operator.availabilityScope, operator.availableCountries, availValue))
     .map(({ operator, offer }) => ({ operator, offer, state: offerState(offer, now) }))
     .filter(({ state }) => state.usable)
     .map(({ operator, offer, state }) => ({
@@ -70,8 +85,10 @@ export default async function PromoCodesPage({ params }: { params: Promise<Param
         </p>
       </header>
 
+      <AvailabilityFilter resultCount={items.length} />
+
       {items.length === 0 ? (
-        <p className="text-muted">No live offers for your region right now.</p>
+        <p className="text-muted">No live offers match this availability filter. Try All regions.</p>
       ) : (
         <PromoList items={items} market={marketCode} />
       )}

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { siteUrl } from '@/lib/env';
-import { marketPath, ROOT_MARKET, SUPPORTED_MARKETS, type MarketCode } from '@/lib/geo';
+import { marketPath, type MarketCode } from '@/lib/geo';
 
 /** Absolute URL for a path, using the configured site URL. */
 export function absoluteUrl(path: string): string {
@@ -9,21 +9,11 @@ export function absoluteUrl(path: string): string {
   return `${siteUrl()}${clean}`;
 }
 
-/** hreflang codes for our markets, plus x-default pointing at the chooser. */
-const HREFLANG: Record<MarketCode, string> = {
-  uk: 'en-GB',
-  us: 'en-US',
-};
-
 /**
- * Build canonical + hreflang alternates for a page that exists in every market
- * at the same sub-path. `pathWithinMarket` is the part after the market segment,
- * e.g. '/reviews/some-operator' or '' for the market homepage.
- *
- * The US is served at the root (no /us prefix) and the UK under /uk, so URLs are
- * built with marketPath. Equivalent UK and US URLs are declared as regional
- * variants so search engines treat them as alternates rather than duplicates.
- * x-default points at the root (the default US region).
+ * Build the canonical for a page. The site serves a single namespace at the
+ * root, so each page has one self-referencing canonical URL and no hreflang
+ * alternates. `pathWithinMarket` is the path after the root, e.g.
+ * '/reviews/some-operator' or '' for the homepage.
  */
 export function marketAlternates(
   market: MarketCode,
@@ -33,16 +23,8 @@ export function marketAlternates(
     ? `/${pathWithinMarket}`
     : pathWithinMarket;
 
-  const languages: Record<string, string> = {
-    'x-default': absoluteUrl(marketPath(ROOT_MARKET, sub)),
-  };
-  for (const code of SUPPORTED_MARKETS) {
-    languages[HREFLANG[code]] = absoluteUrl(marketPath(code, sub));
-  }
-
   return {
     canonical: absoluteUrl(marketPath(market, sub)),
-    languages,
   };
 }
 

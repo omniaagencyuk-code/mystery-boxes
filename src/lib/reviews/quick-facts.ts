@@ -22,6 +22,7 @@ export interface QuickFactsInput {
 const OPERATOR_TYPE_LABEL: Record<OperatorTypeSlug, string> = {
   digital_unboxing: 'Digital unboxing',
   physical_retail: 'Physical retail',
+  skin_case: 'Skin case opening',
 };
 
 function clean(value: string | null | undefined): string | null {

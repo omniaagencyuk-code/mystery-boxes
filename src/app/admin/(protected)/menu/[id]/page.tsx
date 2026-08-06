@@ -42,7 +42,7 @@ export default async function MenuItemFormPage({
           <input id="label" name="label" required defaultValue={item?.label ?? ''} className={inputCls} />
         </Field>
 
-        <Field label="URL" htmlFor="url" hint="Internal path like /uk/reviews or a full external URL. Leave blank for a dropdown label with no link.">
+        <Field label="URL" htmlFor="url" hint="Internal path like /reviews or a full external URL. Leave blank for a dropdown label with no link.">
           <input id="url" name="url" defaultValue={item?.url ?? ''} className={inputCls} />
         </Field>
 

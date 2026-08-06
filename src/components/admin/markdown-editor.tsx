@@ -291,7 +291,7 @@ function LinkPanel({
       </div>
       <div>
         <label className="mb-1 block text-xs text-muted">
-          URL (use /uk/... or /reviews/... for internal links)
+          URL (use /reviews/... or /free for internal links)
         </label>
         <input
           className={field}

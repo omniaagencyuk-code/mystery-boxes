@@ -4,7 +4,7 @@
 // with:  supabase gen types typescript --linked > src/lib/supabase/types.ts
 // Until then, keep this in sync with the migrations by hand.
 
-export type OperatorTypeSlug = 'physical_retail' | 'digital_unboxing';
+export type OperatorTypeSlug = 'physical_retail' | 'digital_unboxing' | 'skin_case';
 export type PublishStatus = 'draft' | 'published';
 export type AdminRole = 'admin' | 'editor' | 'reviewer';
 
@@ -21,6 +21,49 @@ export type HomepageSectionType =
   | 'faq'
   | 'newsletter'
   | 'final_cta';
+
+export type FreePageSectionType =
+  | 'HERO'
+  | 'FILTERS'
+  | 'FEATURED_OFFERS'
+  | 'OFFER_TABLE'
+  | 'CATEGORY_CARDS'
+  | 'BODY_CONTENT'
+  | 'FAQ'
+  | 'NEWSLETTER'
+  | 'TRUST_STRIP';
+
+export type FreeBodyBlockType =
+  | 'H2'
+  | 'H3'
+  | 'PARAGRAPH'
+  | 'LIST'
+  | 'IMAGE'
+  | 'CALLOUT'
+  | 'DATA_TABLE'
+  | 'INTERNAL_LINK'
+  | 'CTA'
+  | 'RELATED_GUIDE'
+  | 'RELATED_REVIEW';
+
+export type AvailabilityScope = 'us' | 'uk' | 'both' | 'global' | 'selected';
+export type OfferType =
+  | 'welcome_box'
+  | 'daily_box'
+  | 'promo_code'
+  | 'no_deposit'
+  | 'referral'
+  | 'daily_reward'
+  | 'free_pack';
+export type PrizeValueBand = 'under_20' | '20_plus' | '50_plus' | '100_plus' | 'premium';
+export type OfferStatus =
+  | 'draft'
+  | 'needs_verification'
+  | 'verified'
+  | 'stale'
+  | 'expired'
+  | 'paused'
+  | 'no_current_offer';
 
 export type ReviewBlockType =
   | 'RICH_TEXT'
@@ -108,6 +151,10 @@ export interface Database {
           shipping_info: string | null;
           support_info: string | null;
           featured: boolean;
+          availability_scope: AvailabilityScope;
+          available_countries: string[];
+          excluded_states: string[];
+          features: string[];
         };
         Insert: {
           id?: string;
@@ -140,6 +187,10 @@ export interface Database {
           shipping_info?: string | null;
           support_info?: string | null;
           featured?: boolean;
+          availability_scope?: AvailabilityScope;
+          available_countries?: string[];
+          excluded_states?: string[];
+          features?: string[];
         };
         Update: Partial<Database['public']['Tables']['operators']['Insert']>;
         Relationships: [];
@@ -176,6 +227,15 @@ export interface Database {
           eligibility: string | null;
           terms_url: string | null;
           last_verified_at: string | null;
+          offer_type: OfferType | null;
+          prize_value_band: PrizeValueBand | null;
+          availability_scope: AvailabilityScope;
+          available_countries: string[];
+          excluded_states: string[];
+          source_url: string | null;
+          standard_url: string | null;
+          next_review_at: string | null;
+          status: OfferStatus;
         };
         Insert: {
           id?: string;
@@ -192,6 +252,15 @@ export interface Database {
           eligibility?: string | null;
           terms_url?: string | null;
           last_verified_at?: string | null;
+          offer_type?: OfferType | null;
+          prize_value_band?: PrizeValueBand | null;
+          availability_scope?: AvailabilityScope;
+          available_countries?: string[];
+          excluded_states?: string[];
+          source_url?: string | null;
+          standard_url?: string | null;
+          next_review_at?: string | null;
+          status?: OfferStatus;
         };
         Update: Partial<Database['public']['Tables']['offers']['Insert']>;
         Relationships: [];
@@ -564,6 +633,130 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['newsletter_subscribers']['Insert']>;
         Relationships: [];
       };
+      free_page_settings: {
+        Row: {
+          page_key: string;
+          h1: string | null;
+          hero_intro: string | null;
+          hero_image_url: string | null;
+          hero_image_mobile_url: string | null;
+          cta_primary_label: string | null;
+          cta_primary_href: string | null;
+          cta_secondary_label: string | null;
+          cta_secondary_href: string | null;
+          newsletter_heading: string | null;
+          newsletter_body: string | null;
+          newsletter_placeholder: string | null;
+          newsletter_button: string | null;
+          newsletter_privacy: string | null;
+          table_default_sort: string;
+          table_page_size: number;
+          table_cta_fallback: string;
+          table_empty_state: string | null;
+          seo_title: string | null;
+          meta_description: string | null;
+          canonical_url: string | null;
+          og_image_url: string | null;
+          index_status: string;
+          published: boolean;
+          author: string | null;
+          reviewer: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          page_key?: string;
+          h1?: string | null;
+          hero_intro?: string | null;
+          hero_image_url?: string | null;
+          hero_image_mobile_url?: string | null;
+          cta_primary_label?: string | null;
+          cta_primary_href?: string | null;
+          cta_secondary_label?: string | null;
+          cta_secondary_href?: string | null;
+          newsletter_heading?: string | null;
+          newsletter_body?: string | null;
+          newsletter_placeholder?: string | null;
+          newsletter_button?: string | null;
+          newsletter_privacy?: string | null;
+          table_default_sort?: string;
+          table_page_size?: number;
+          table_cta_fallback?: string;
+          table_empty_state?: string | null;
+          seo_title?: string | null;
+          meta_description?: string | null;
+          canonical_url?: string | null;
+          og_image_url?: string | null;
+          index_status?: string;
+          published?: boolean;
+          author?: string | null;
+          reviewer?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['free_page_settings']['Insert']>;
+        Relationships: [];
+      };
+      free_page_sections: {
+        Row: { id: string; section_type: FreePageSectionType; position: number; visible: boolean };
+        Insert: { id?: string; section_type: FreePageSectionType; position?: number; visible?: boolean };
+        Update: Partial<Database['public']['Tables']['free_page_sections']['Insert']>;
+        Relationships: [];
+      };
+      free_page_stats: {
+        Row: { id: string; label: string; value_key: string | null; static_value: string | null; position: number };
+        Insert: { id?: string; label: string; value_key?: string | null; static_value?: string | null; position?: number };
+        Update: Partial<Database['public']['Tables']['free_page_stats']['Insert']>;
+        Relationships: [];
+      };
+      free_featured_offers: {
+        Row: { id: string; operator_id: string; badge: string | null; position: number };
+        Insert: { id?: string; operator_id: string; badge?: string | null; position?: number };
+        Update: Partial<Database['public']['Tables']['free_featured_offers']['Insert']>;
+        Relationships: [];
+      };
+      free_category_cards: {
+        Row: { id: string; category_id: string | null; label: string | null; href: string | null; image_url: string | null; position: number };
+        Insert: { id?: string; category_id?: string | null; label?: string | null; href?: string | null; image_url?: string | null; position?: number };
+        Update: Partial<Database['public']['Tables']['free_category_cards']['Insert']>;
+        Relationships: [];
+      };
+      free_body_blocks: {
+        Row: {
+          id: string;
+          block_type: FreeBodyBlockType;
+          position: number;
+          heading: string | null;
+          body: string | null;
+          media_url: string | null;
+          href: string | null;
+          config: Record<string, unknown>;
+          visible: boolean;
+        };
+        Insert: {
+          id?: string;
+          block_type: FreeBodyBlockType;
+          position?: number;
+          heading?: string | null;
+          body?: string | null;
+          media_url?: string | null;
+          href?: string | null;
+          config?: Record<string, unknown>;
+          visible?: boolean;
+        };
+        Update: Partial<Database['public']['Tables']['free_body_blocks']['Insert']>;
+        Relationships: [];
+      };
+      free_page_faqs: {
+        Row: { id: string; question: string; answer: string; position: number };
+        Insert: { id?: string; question: string; answer: string; position?: number };
+        Update: Partial<Database['public']['Tables']['free_page_faqs']['Insert']>;
+        Relationships: [];
+      };
+      free_trust_items: {
+        Row: { id: string; label: string; detail: string | null; icon: string | null; position: number };
+        Insert: { id?: string; label: string; detail?: string | null; icon?: string | null; position?: number };
+        Update: Partial<Database['public']['Tables']['free_trust_items']['Insert']>;
+        Relationships: [];
+      };
       media: {
         Row: {
           id: string;
@@ -748,3 +941,11 @@ export type HomepageSectionRow = Database['public']['Tables']['homepage_sections
 export type HomepageTrustIndicatorRow =
   Database['public']['Tables']['homepage_trust_indicators']['Row'];
 export type HomepageFaqRow = Database['public']['Tables']['homepage_faqs']['Row'];
+export type FreePageSettingsRow = Database['public']['Tables']['free_page_settings']['Row'];
+export type FreePageSectionRow = Database['public']['Tables']['free_page_sections']['Row'];
+export type FreePageStatRow = Database['public']['Tables']['free_page_stats']['Row'];
+export type FreeFeaturedOfferRow = Database['public']['Tables']['free_featured_offers']['Row'];
+export type FreeCategoryCardRow = Database['public']['Tables']['free_category_cards']['Row'];
+export type FreeBodyBlockRow = Database['public']['Tables']['free_body_blocks']['Row'];
+export type FreePageFaqRow = Database['public']['Tables']['free_page_faqs']['Row'];
+export type FreeTrustItemRow = Database['public']['Tables']['free_trust_items']['Row'];

@@ -91,13 +91,9 @@ function DesktopItem({ node, active }: { node: MenuNode; active: (url: string | 
 
 export function SiteNav({
   current,
-  other,
-  otherLabel,
   menu,
 }: {
   current: MarketCode;
-  other: MarketCode;
-  otherLabel: string;
   menu: MenuNode[];
 }) {
   const pathname = usePathname();
@@ -120,13 +116,6 @@ export function SiteNav({
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-muted lg:inline">{current.toUpperCase()}</span>
-          <Link
-            href={marketPath(other)}
-            className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold text-ink hover:bg-elevated"
-          >
-            Switch to {otherLabel}
-          </Link>
           <button
             type="button"
             aria-label="Toggle menu"

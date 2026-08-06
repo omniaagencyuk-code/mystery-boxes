@@ -1,5 +1,5 @@
 import { marketPath, type MarketCode } from '@/lib/geo';
-import type { OperatorTypeSlug } from '@/lib/supabase/types';
+import type { AvailabilityScope, OperatorTypeSlug } from '@/lib/supabase/types';
 
 /**
  * View model for an operator as consumed by the card component and pages. It is
@@ -20,6 +20,9 @@ export interface OperatorSummary {
   operatorType: OperatorTypeSlug;
   licenceAuthority: string | null;
   licenceNumber: string | null;
+  availabilityScope: AvailabilityScope;
+  availableCountries: string[];
+  availabilityLabel: string;
 }
 
 /** Build the canonical review URL for an operator within a market. */

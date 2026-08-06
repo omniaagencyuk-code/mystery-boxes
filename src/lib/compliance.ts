@@ -15,17 +15,12 @@ export interface ResponsibleGamblingResource {
  * operators only. This is the single place to add or change them: when the
  * correct US reference is confirmed, add it here and nothing else changes.
  *
- * We deliberately invent nothing. BeGambleAware and GamStop are UK bodies, so
- * they live under `uk`. The `us` list is intentionally empty until a real US
- * responsible-gambling reference is confirmed.
+ * We deliberately invent nothing. The list is intentionally empty until a real
+ * responsible-gambling reference for the market is confirmed, then added here.
  */
 export const RESPONSIBLE_GAMBLING_RESOURCES: Record<MarketCode, ResponsibleGamblingResource[]> = {
-  uk: [
-    { label: 'BeGambleAware', href: 'https://www.begambleaware.org' },
-    { label: 'GamStop', href: 'https://www.gamstop.co.uk' },
-  ],
-  // TODO confirm the US responsible-gambling reference, then add it here. Left
-  // empty on purpose so nothing is fabricated for the US market.
+  // TODO confirm the responsible-gambling reference, then add it here. Left
+  // empty on purpose so nothing is fabricated.
   us: [],
 };
 
@@ -55,7 +50,11 @@ export function complianceFor(
   operatorType: OperatorTypeSlug,
   market: MarketCode,
 ): ComplianceFurniture {
-  if (operatorType === 'digital_unboxing') {
+  // Digital unboxing and skin case opening are both pay-to-open randomised
+  // mechanics, so both carry the full gambling compliance furniture. Skin cases
+  // sit even closer to wagering (tradeable items with a live secondary market),
+  // so they get the same 18+, licence and responsible-gambling treatment.
+  if (operatorType === 'digital_unboxing' || operatorType === 'skin_case') {
     return {
       affiliateDisclosure: true,
       ageRestriction: true,
