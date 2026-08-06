@@ -23,6 +23,15 @@ const SECTION_OPTIONS: { value: HomepageSectionType; label: string }[] = [
   { value: 'faq', label: 'FAQ' },
   { value: 'newsletter', label: 'Newsletter' },
   { value: 'final_cta', label: 'Final CTA' },
+  { value: 'best_sites_article', label: 'Best sites article' },
+];
+
+const ARTICLE_BLOCK_OPTIONS = [
+  { value: 'H2', label: 'Heading (H2)' },
+  { value: 'H3', label: 'Subheading (H3)' },
+  { value: 'PARAGRAPH', label: 'Paragraph' },
+  { value: 'PLATFORM_CARD', label: 'Platform card' },
+  { value: 'CALLOUT', label: 'Callout' },
 ];
 
 const DEFAULT_SECTION_ORDER: HomepageSectionType[] = [
@@ -38,6 +47,7 @@ const DEFAULT_SECTION_ORDER: HomepageSectionType[] = [
   'faq',
   'newsletter',
   'final_cta',
+  'best_sites_article',
 ];
 
 /**
@@ -116,25 +126,50 @@ export default async function HomepageEditorPage({
 
   const marketId = selectedMarket.id;
 
-  const [{ data: settings }, { data: sectionRows }, { data: trustRows }, { data: faqRows }] =
-    await Promise.all([
-      db.from('homepage_settings').select('*').eq('market_id', marketId).maybeSingle(),
-      db
-        .from('homepage_sections')
-        .select('section_type, visible, position')
-        .eq('market_id', marketId)
-        .order('position'),
-      db
-        .from('homepage_trust_indicators')
-        .select('label, position')
-        .eq('market_id', marketId)
-        .order('position'),
-      db
-        .from('homepage_faqs')
-        .select('question, answer, position')
-        .eq('market_id', marketId)
-        .order('position'),
-    ]);
+  const [
+    { data: settings },
+    { data: sectionRows },
+    { data: trustRows },
+    { data: faqRows },
+    { data: articleRows },
+    { data: operatorRows },
+  ] = await Promise.all([
+    db.from('homepage_settings').select('*').eq('market_id', marketId).maybeSingle(),
+    db
+      .from('homepage_sections')
+      .select('section_type, visible, position')
+      .eq('market_id', marketId)
+      .order('position'),
+    db
+      .from('homepage_trust_indicators')
+      .select('label, position')
+      .eq('market_id', marketId)
+      .order('position'),
+    db
+      .from('homepage_faqs')
+      .select('question, answer, position')
+      .eq('market_id', marketId)
+      .order('position'),
+    db
+      .from('homepage_article_blocks')
+      .select('block_type, heading, body, operator_id, badge, visible, position')
+      .eq('market_id', marketId)
+      .order('position'),
+    db.from('operators').select('id, name, slug').eq('active', true).order('name'),
+  ]);
+
+  const operatorOptions = [
+    { value: '', label: 'No platform' },
+    ...(operatorRows ?? []).map((o) => ({ value: o.id, label: o.name })),
+  ];
+  const articleInitial = (articleRows ?? []).map((b) => ({
+    block_type: b.block_type,
+    badge: b.badge ?? '',
+    heading: b.heading ?? '',
+    body: b.body ?? '',
+    operator_id: b.operator_id ?? '',
+    visible: b.visible,
+  }));
 
   const sectionsInitial =
     sectionRows && sectionRows.length > 0
@@ -291,6 +326,30 @@ export default async function HomepageEditorPage({
             fields={[
               { key: 'section_type', label: 'Section', type: 'select', options: SECTION_OPTIONS },
               { key: 'visible', label: 'Visible', type: 'checkbox' },
+            ]}
+          />
+        </fieldset>
+
+        <fieldset className="u-glass rounded-lg p-4">
+          <legend className="px-1 text-sm font-medium">Best sites article</legend>
+          <p className="mb-3 text-xs text-muted">
+            The homepage article, in order. Use a Platform card block and pick the platform to show its
+            card with a Sign up and Read review button. Enable the &ldquo;Best sites article&rdquo; section above to display it.
+          </p>
+          <Repeater
+            name="article_json"
+            addLabel="Add block"
+            initial={articleInitial}
+            newItem={{ block_type: 'PARAGRAPH', badge: '', heading: '', body: '', operator_id: '', visible: true }}
+            labelKey="block_type"
+            labelFallback="Block"
+            fields={[
+              { key: 'block_type', label: 'Type', type: 'select', options: ARTICLE_BLOCK_OPTIONS },
+              { key: 'visible', label: 'Visible', type: 'checkbox' },
+              { key: 'operator_id', label: 'Platform (for a Platform card)', type: 'select', options: operatorOptions },
+              { key: 'badge', label: 'Badge (e.g. Best Overall)' },
+              { key: 'heading', label: 'Heading (for H2/H3/Callout)', full: true },
+              { key: 'body', label: 'Body text', type: 'textarea', full: true },
             ]}
           />
         </fieldset>

@@ -1,11 +1,13 @@
 import { cache } from 'react';
 
+import { availabilityLabel } from '@/lib/availability';
 import { getMarketByCode } from '@/lib/data/markets';
 import { getVisibleOperatorsForMarket } from '@/lib/data/operators';
 import { marketPath, type MarketCode } from '@/lib/geo';
 import type { OperatorSummary } from '@/lib/models';
+import { resolveCta } from '@/lib/reviews/affiliate';
 import { createServerSupabase } from '@/lib/supabase/server';
-import type { HomepageSectionType } from '@/lib/supabase/types';
+import type { HomepageArticleBlockType, HomepageSectionType } from '@/lib/supabase/types';
 
 export interface HomepageFaqItem {
   question: string;
@@ -139,6 +141,92 @@ export const getHomepageConfig = cache(async (market: MarketCode): Promise<Homep
   const faqs = (faqRows ?? []).map((f) => ({ question: f.question, answer: f.answer }));
 
   return { settings, sections, trustIndicators, faqs };
+});
+
+/** A platform card embedded in the homepage article. */
+export interface HomeArticlePlatform {
+  slug: string;
+  name: string;
+  logoUrl: string | null;
+  rating: number | null;
+  availabilityLabel: string;
+  reviewHref: string;
+  cta: { href: string; tracked: boolean } | null;
+}
+
+export interface HomeArticleBlock {
+  id: string;
+  type: HomepageArticleBlockType;
+  heading: string | null;
+  body: string | null;
+  badge: string | null;
+  platform: HomeArticlePlatform | null;
+}
+
+/**
+ * The homepage "Best Mystery Box Sites" article: ordered editorial blocks with
+ * PLATFORM_CARD blocks resolved to a live operator, its availability label and a
+ * tracked affiliate CTA (falling back to tracking/website URL, else null).
+ */
+export const getHomepageArticle = cache(async (market: MarketCode): Promise<HomeArticleBlock[]> => {
+  const record = await getMarketByCode(market);
+  if (!record) return [];
+  const supabase = await createServerSupabase();
+
+  const { data: blocks } = await supabase
+    .from('homepage_article_blocks')
+    .select('*')
+    .eq('market_id', record.id)
+    .eq('visible', true)
+    .order('position');
+  if (!blocks || blocks.length === 0) return [];
+
+  const operatorIds = blocks.map((b) => b.operator_id).filter((id): id is string => !!id);
+
+  const platformById = new Map<string, HomeArticlePlatform>();
+  if (operatorIds.length > 0) {
+    const [{ data: operators }, { data: links }] = await Promise.all([
+      supabase
+        .from('operators')
+        .select('id, slug, name, logo_url, logo_dark_url, rating, tracking_url, website_url, availability_scope, available_countries')
+        .eq('active', true)
+        .in('id', operatorIds),
+      supabase.from('affiliate_links').select('slug, operator_id, market_id, active').eq('active', true).in('operator_id', operatorIds),
+    ]);
+
+    const slugByOperator = new Map<string, string>();
+    for (const link of links ?? []) {
+      if (!link.operator_id) continue;
+      if (link.market_id === null || !slugByOperator.has(link.operator_id)) {
+        slugByOperator.set(link.operator_id, link.slug);
+      }
+    }
+
+    for (const op of operators ?? []) {
+      const cta = resolveCta(
+        { affiliateSlug: slugByOperator.get(op.id) ?? null, trackingUrl: op.tracking_url, websiteUrl: op.website_url },
+        { placement: 'home_article', label: 'Sign up', page: '/' },
+      );
+      platformById.set(op.id, {
+        slug: op.slug,
+        name: op.name,
+        logoUrl: op.logo_dark_url ?? op.logo_url,
+        rating: op.rating,
+        availabilityLabel: availabilityLabel(op.availability_scope, op.available_countries),
+        reviewHref: marketPath(market, `/reviews/${op.slug}`),
+        cta,
+      });
+    }
+  }
+
+  return blocks.map((b) => ({
+    id: b.id,
+    type: b.block_type,
+    heading: b.heading,
+    body: b.body,
+    badge: b.badge,
+    platform: b.operator_id ? (platformById.get(b.operator_id) ?? null) : null,
+  }));
 });
 
 /** Visible operators flagged as featured, for the Featured brands section. */

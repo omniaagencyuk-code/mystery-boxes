@@ -6,8 +6,9 @@ import { Markdown } from '@/components/markdown';
 import { OutboundLink } from '@/components/outbound-link';
 import { PlatformRankingCard } from '@/components/platform-ranking-card';
 import { Rating } from '@/components/rating';
+import { HomeArticle } from '@/components/home/home-article';
 import type { GuideCard } from '@/lib/data/content';
-import type { HomepageConfig } from '@/lib/data/homepage';
+import type { HomeArticleBlock, HomepageConfig } from '@/lib/data/homepage';
 import { marketPath, type MarketCode } from '@/lib/geo';
 import type { OperatorSummary } from '@/lib/models';
 import type { HomepageSectionType, OfferRow } from '@/lib/supabase/types';
@@ -21,6 +22,7 @@ export interface HomeData {
   guides: GuideCard[];
   latestReviewed: OperatorSummary[];
   featured: OperatorSummary[];
+  article: HomeArticleBlock[];
 }
 
 function SectionHead({ title, href, linkLabel }: { title: string; href?: string; linkLabel?: string }) {
@@ -198,6 +200,14 @@ function renderSection(type: HomepageSectionType, config: HomepageConfig, data: 
         </section>
       );
     }
+
+    case 'best_sites_article':
+      if (data.article.length === 0) return null;
+      return (
+        <section className="space-y-5">
+          <HomeArticle blocks={data.article} />
+        </section>
+      );
 
     case 'how_we_rate':
       if (!config.settings.howWeRate) return null;

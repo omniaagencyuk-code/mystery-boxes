@@ -20,7 +20,10 @@ export type HomepageSectionType =
   | 'trust'
   | 'faq'
   | 'newsletter'
-  | 'final_cta';
+  | 'final_cta'
+  | 'best_sites_article';
+
+export type HomepageArticleBlockType = 'H2' | 'H3' | 'PARAGRAPH' | 'PLATFORM_CARD' | 'CALLOUT';
 
 export type FreePageSectionType =
   | 'HERO'
@@ -627,6 +630,32 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['homepage_faqs']['Insert']>;
         Relationships: [];
       };
+      homepage_article_blocks: {
+        Row: {
+          id: string;
+          market_id: string;
+          block_type: HomepageArticleBlockType;
+          position: number;
+          heading: string | null;
+          body: string | null;
+          operator_id: string | null;
+          badge: string | null;
+          visible: boolean;
+        };
+        Insert: {
+          id?: string;
+          market_id: string;
+          block_type: HomepageArticleBlockType;
+          position?: number;
+          heading?: string | null;
+          body?: string | null;
+          operator_id?: string | null;
+          badge?: string | null;
+          visible?: boolean;
+        };
+        Update: Partial<Database['public']['Tables']['homepage_article_blocks']['Insert']>;
+        Relationships: [];
+      };
       newsletter_subscribers: {
         Row: { id: string; email: string; market_id: string | null; created_at: string };
         Insert: { id?: string; email: string; market_id?: string | null; created_at?: string };
@@ -941,6 +970,7 @@ export type HomepageSectionRow = Database['public']['Tables']['homepage_sections
 export type HomepageTrustIndicatorRow =
   Database['public']['Tables']['homepage_trust_indicators']['Row'];
 export type HomepageFaqRow = Database['public']['Tables']['homepage_faqs']['Row'];
+export type HomepageArticleBlockRow = Database['public']['Tables']['homepage_article_blocks']['Row'];
 export type FreePageSettingsRow = Database['public']['Tables']['free_page_settings']['Row'];
 export type FreePageSectionRow = Database['public']['Tables']['free_page_sections']['Row'];
 export type FreePageStatRow = Database['public']['Tables']['free_page_stats']['Row'];

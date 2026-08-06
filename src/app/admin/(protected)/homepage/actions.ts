@@ -6,9 +6,9 @@ import { redirect } from 'next/navigation';
 import { adminContext, adminDb } from '@/lib/admin/db';
 import { logAudit } from '@/lib/admin/audit';
 import { jsonRows, rowBool, rowStr, str, strOrNull } from '@/lib/admin/form';
-import type { HomepageSectionType } from '@/lib/supabase/types';
+import type { HomepageArticleBlockType, HomepageSectionType } from '@/lib/supabase/types';
 
-/** The 12 valid homepage section types. */
+/** The valid homepage section types. */
 const SECTION_TYPES = new Set<HomepageSectionType>([
   'top_rated',
   'comparison',
@@ -22,6 +22,15 @@ const SECTION_TYPES = new Set<HomepageSectionType>([
   'faq',
   'newsletter',
   'final_cta',
+  'best_sites_article',
+]);
+
+const ARTICLE_BLOCK_TYPES = new Set<HomepageArticleBlockType>([
+  'H2',
+  'H3',
+  'PARAGRAPH',
+  'PLATFORM_CARD',
+  'CALLOUT',
 ]);
 
 /** Resolve a media picker: a chosen media id's URL wins over a pasted URL. */
@@ -110,6 +119,29 @@ export async function saveHomepage(formData: FormData) {
   await db.from('homepage_faqs').delete().eq('market_id', market_id);
   if (faqRows.length > 0) {
     const { error } = await db.from('homepage_faqs').insert(faqRows);
+    if (error) throw new Error(error.message);
+  }
+
+  // Article blocks: replace-all for this market. Order sets position; an empty
+  // operator becomes null so a Platform card without a platform renders nothing.
+  const articleRows = jsonRows(formData, 'article_json')
+    .filter((r) => ARTICLE_BLOCK_TYPES.has(rowStr(r, 'block_type') as HomepageArticleBlockType))
+    .map((r, i) => {
+      const operatorId = rowStr(r, 'operator_id');
+      return {
+        market_id,
+        block_type: rowStr(r, 'block_type') as HomepageArticleBlockType,
+        heading: rowStr(r, 'heading') || null,
+        body: rowStr(r, 'body') || null,
+        operator_id: operatorId || null,
+        badge: rowStr(r, 'badge') || null,
+        visible: rowBool(r, 'visible'),
+        position: i,
+      };
+    });
+  await db.from('homepage_article_blocks').delete().eq('market_id', market_id);
+  if (articleRows.length > 0) {
+    const { error } = await db.from('homepage_article_blocks').insert(articleRows);
     if (error) throw new Error(error.message);
   }
 
