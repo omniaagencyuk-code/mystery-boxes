@@ -14,10 +14,16 @@ export function Newsletter({
   heading,
   body,
   market,
+  placeholder = 'Enter your email',
+  buttonLabel = 'Subscribe',
+  privacyNote,
 }: {
   heading: string;
   body: string;
   market: string;
+  placeholder?: string;
+  buttonLabel?: string;
+  privacyNote?: string | null;
 }) {
   const [state, action, pending] = useActionState(subscribeNewsletter, INITIAL);
 
@@ -39,7 +45,7 @@ export function Newsletter({
               type="email"
               name="email"
               required
-              placeholder="Enter your email"
+              placeholder={placeholder}
               className="w-full rounded-lg border border-line bg-elevated px-3 py-2.5 text-sm text-ink outline-none focus-visible:border-primary"
             />
             <button
@@ -47,9 +53,10 @@ export function Newsletter({
               disabled={pending}
               className="u-btn-primary shrink-0 rounded-lg px-5 py-2.5 text-sm font-bold disabled:opacity-60"
             >
-              {pending ? 'Saving' : 'Subscribe'}
+              {pending ? 'Saving' : buttonLabel}
             </button>
           </div>
+          {privacyNote && <p className="text-xs text-muted">{privacyNote}</p>}
           {state.message && (
             <p className={`text-sm ${state.ok ? 'text-success' : 'text-danger'}`} role="status">
               {state.message}

@@ -23,6 +23,15 @@ function offer(overrides: Partial<OfferRow> = {}): OfferRow {
     eligibility: null,
     terms_url: null,
     last_verified_at: null,
+    offer_type: null,
+    prize_value_band: null,
+    availability_scope: 'global',
+    available_countries: [],
+    excluded_states: [],
+    source_url: null,
+    standard_url: null,
+    next_review_at: null,
+    status: 'verified',
     ...overrides,
   };
 }

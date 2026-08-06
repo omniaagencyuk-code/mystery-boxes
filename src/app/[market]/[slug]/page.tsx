@@ -25,6 +25,7 @@ const RESERVED = new Set([
   'promo-codes',
   'categories',
   'guides',
+  'free',
   'uk',
   'us',
 ]);
