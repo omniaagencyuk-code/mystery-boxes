@@ -166,13 +166,13 @@ on conflict (operator_id, market_id) do update set body=excluded.body, verdict=e
   last_checked_at=excluded.last_checked_at, best_for_title=excluded.best_for_title,
   best_for_description=excluded.best_for_description, seo_title=excluded.seo_title, meta_description=excluded.meta_description;
 
--- === 4. Mystery Box Shop  (/reviews/mystery-box-shop, uk market) ===
-insert into public.operators (slug, name, operator_type_id, founded_year, availability, summary, pros, cons, active)
-select $md$mystery-box-shop$md$, $md$Mystery Box Shop$md$, t.id, 2013, $md$UK and Northern Ireland only$md$, $md$Mystery Box Shop is a UK physical retailer selling themed surprise gift boxes of branded items, shipped within the UK and Northern Ireland. You pay a fixed price and a real box is posted to you, with no gambling or digital draw involved.$md$, $md$["Real physical retailer trading since 2013 with a UK warehouse and named brand suppliers", "Straightforward fixed-price model with tracked delivery and a stated RRP-exceeds-spend promise", "Broadly positive service reviews, with damaged or leaking items replaced when reported in time"]$md$::jsonb, $md$["Ships only within the UK and Northern Ireland, so US shoppers cannot order directly", "No returns simply because the contents do not suit your taste", "As with any mystery box, actual value and item quality vary from box to box"]$md$::jsonb, true
+-- === 4. Mystery Box Shop  (/reviews/mystery-box-shop, us root, availability uk) ===
+insert into public.operators (slug, name, operator_type_id, founded_year, availability, availability_scope, summary, pros, cons, active)
+select $md$mystery-box-shop$md$, $md$Mystery Box Shop$md$, t.id, 2013, $md$UK and Northern Ireland only$md$, $md$uk$md$, $md$Mystery Box Shop is a UK physical retailer selling themed surprise gift boxes of branded items, shipped within the UK and Northern Ireland. You pay a fixed price and a real box is posted to you, with no gambling or digital draw involved.$md$, $md$["Real physical retailer trading since 2013 with a UK warehouse and named brand suppliers", "Straightforward fixed-price model with tracked delivery and a stated RRP-exceeds-spend promise", "Broadly positive service reviews, with damaged or leaking items replaced when reported in time"]$md$::jsonb, $md$["Ships only within the UK and Northern Ireland, so US shoppers cannot order directly", "No returns simply because the contents do not suit your taste", "As with any mystery box, actual value and item quality vary from box to box"]$md$::jsonb, true
 from public.operator_types t where t.slug = $md$physical_retail$md$
-on conflict (slug) do update set name=excluded.name, operator_type_id=excluded.operator_type_id, founded_year=excluded.founded_year, availability=excluded.availability, summary=excluded.summary, pros=excluded.pros, cons=excluded.cons, active=true, updated_at=now();
+on conflict (slug) do update set name=excluded.name, operator_type_id=excluded.operator_type_id, founded_year=excluded.founded_year, availability=excluded.availability, availability_scope=excluded.availability_scope, summary=excluded.summary, pros=excluded.pros, cons=excluded.cons, active=true, updated_at=now();
 insert into public.operator_markets (operator_id, market_id, visible, requires_geo_block)
-select o.id, m.id, true, false from public.operators o, public.markets m where o.slug=$md$mystery-box-shop$md$ and m.code=$md$uk$md$
+select o.id, m.id, true, false from public.operators o, public.markets m where o.slug=$md$mystery-box-shop$md$ and m.code=$md$us$md$
 on conflict (operator_id, market_id) do update set visible=true, requires_geo_block=false;
 insert into public.reviews (operator_id, market_id, body, verdict, status, published_at, last_checked_at, best_for_title, best_for_description, seo_title, meta_description)
 select o.id, m.id,
@@ -211,7 +211,7 @@ $md$UK gift buyers who want a real surprise box$md$,
 $md$Best for shoppers in the UK and Northern Ireland who want a physical, gift-ready surprise box rather than a digital unboxing experience.$md$,
 $md$Is Mystery Box Shop Legit? Our Review (2026)$md$,
 $md$Our honest review of Mystery Box Shop (mysteryboxshop.com), a UK physical mystery gift box retailer. Is it legit, what it sells, shipping and value.$md$
-from public.operators o, public.markets m where o.slug=$md$mystery-box-shop$md$ and m.code=$md$uk$md$
+from public.operators o, public.markets m where o.slug=$md$mystery-box-shop$md$ and m.code=$md$us$md$
 on conflict (operator_id, market_id) do update set body=excluded.body, verdict=excluded.verdict, status='published',
   updated_at=now(), published_at=coalesce(public.reviews.published_at, excluded.published_at),
   last_checked_at=excluded.last_checked_at, best_for_title=excluded.best_for_title,

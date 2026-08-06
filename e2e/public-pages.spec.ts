@@ -13,6 +13,7 @@ const HUBS = [
   { path: '/compare', name: 'Compare' },
   { path: '/promo-codes', name: 'Promo codes' },
   { path: '/guides', name: 'Guides' },
+  { path: '/free', name: 'Free mystery boxes' },
 ];
 
 test.describe('public hub pages', () => {
@@ -54,6 +55,30 @@ test('compare page shows the interactive comparison controls', async ({ page }) 
   await page.goto('/compare', { waitUntil: 'domcontentloaded' });
   // The Share and Add-platform controls only exist on the interactive tool.
   await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
+});
+
+test('free page shows the filter panel and an offer table with a live count', async ({ page }) => {
+  await page.goto('/free', { waitUntil: 'domcontentloaded' });
+  // The accessible live filter panel announces the current result count.
+  await expect(page.getByRole('status').filter({ hasText: /offers?/ }).first()).toBeVisible();
+  // The offer section anchor exists for the hero CTA and filter links.
+  await expect(page.locator('#offers')).toBeVisible();
+});
+
+test('free page availability filter narrows results via the URL', async ({ page }) => {
+  await page.goto('/free?availability=uk', { waitUntil: 'domcontentloaded' });
+  expect(new URL(page.url()).searchParams.get('availability')).toBe('uk');
+  await expect(page.locator('h1')).toHaveCount(1);
+});
+
+test('reviews list exposes an availability filter', async ({ page }) => {
+  await page.goto('/reviews', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('group', { name: 'Filter by availability' })).toBeVisible();
+});
+
+test('legacy /uk URLs redirect to the root namespace', async ({ page }) => {
+  await page.goto('/uk/reviews', { waitUntil: 'domcontentloaded' });
+  expect(new URL(page.url()).pathname).toBe('/reviews');
 });
 
 test('admin is not indexable', async ({ page }) => {
