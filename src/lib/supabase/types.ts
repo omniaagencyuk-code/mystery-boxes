@@ -4,7 +4,7 @@
 // with:  supabase gen types typescript --linked > src/lib/supabase/types.ts
 // Until then, keep this in sync with the migrations by hand.
 
-export type OperatorTypeSlug = 'physical_retail' | 'digital_unboxing';
+export type OperatorTypeSlug = 'physical_retail' | 'digital_unboxing' | 'skin_case';
 export type PublishStatus = 'draft' | 'published';
 export type AdminRole = 'admin' | 'editor' | 'reviewer';
 

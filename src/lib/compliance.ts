@@ -55,7 +55,11 @@ export function complianceFor(
   operatorType: OperatorTypeSlug,
   market: MarketCode,
 ): ComplianceFurniture {
-  if (operatorType === 'digital_unboxing') {
+  // Digital unboxing and skin case opening are both pay-to-open randomised
+  // mechanics, so both carry the full gambling compliance furniture. Skin cases
+  // sit even closer to wagering (tradeable items with a live secondary market),
+  // so they get the same 18+, licence and responsible-gambling treatment.
+  if (operatorType === 'digital_unboxing' || operatorType === 'skin_case') {
     return {
       affiliateDisclosure: true,
       ageRestriction: true,
